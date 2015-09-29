@@ -16,8 +16,8 @@ team_t team = {
     "student1",     /* First member full name */
     "student1@ecf.utoronto.ca",  /* First member email address */
 
-    "",                   /* Second member full name (leave blank if none) */
-    ""                    /* Second member email addr (leave blank if none) */
+    "Tahia Khan",                   /* Second member full name (leave blank if none) */
+    "tahia.khan@mail.utoronto.ca"   /* Second member email addr (leave blank if none) */
 };
 
 /***************
@@ -58,12 +58,12 @@ void rotate(int dim, pixel *src, pixel *dst)
 
 /* 
  * second attempt (commented out for now)
+*/
 char rotate_two_descr[] = "second attempt";
 void attempt_two(int dim, pixel *src, pixel *dst) 
 {
     naive_rotate(dim, src, dst);
 }
-*/
 
 
 /*********************************************************************
@@ -79,7 +79,7 @@ void register_rotate_functions()
     add_rotate_function(&naive_rotate, naive_rotate_descr);   
     add_rotate_function(&rotate, rotate_descr);   
 
-    //add_rotate_function(&attempt_two, rotate_two_descr);   
+    add_rotate_function(&attempt_two, rotate_two_descr);   
     //add_rotate_function(&attempt_three, rotate_three_descr);   
     //add_rotate_function(&attempt_four, rotate_four_descr);   
     //add_rotate_function(&attempt_five, rotate_five_descr);   
