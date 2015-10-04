@@ -253,40 +253,299 @@ void attempt_seven(int dim, pixel *src, pixel *dst)
 /* 
  * eighth attempt
  */
-char rotate_eight_descr[]= "eighth attempt: loop unrolling, function inlining and blocking (incomplete)";
-void attempt_eigth(int dim, pixel *src, pixel *dst) 
+char rotate_eight_descr[]= "eighth attempt: even bigger loop unrolling, function inlining";
+void attempt_eight(int dim, pixel *src, pixel *dst) 
 {
     int i, j;
 
-    for (j = 0; j < dim; j+=4)
-	    for (i = 0; i < dim; i+=4) {
-            //j += 0
-	        dst[(dim - 1 - j) * dim + i] = src[i * dim + j];
-	        dst[(dim - 1 - j) * dim + (i + 1)] = src[(i + 1) * dim + j];
-	        dst[(dim - 1 - j) * dim + (i + 2)] = src[(i + 2) * dim + j];
-	        dst[(dim - 1 - j) * dim + (i + 3)] = src[(i + 3) * dim + j];
-	        dst[(dim - 1 - j) * dim + (i + 4)] = src[(i + 4) * dim + j];
-	        dst[(dim - 1 - j) * dim + (i + 5)] = src[(i + 5) * dim + j];
-	        dst[(dim - 1 - j) * dim + (i + 6)] = src[(i + 6) * dim + j];
-	        dst[(dim - 1 - j) * dim + (i + 7)] = src[(i + 7) * dim + j];
+    for (j = 0; j < dim; j+=16)
+	    for (i = 0; i < dim; i+=16) {
+            dst[(dim - 1 - j) * dim + i] = src[i * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 1)] = src[(i + 1) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 2)] = src[(i + 2) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 3)] = src[(i + 3) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 4)] = src[(i + 4) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 5)] = src[(i + 5) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 6)] = src[(i + 6) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 7)] = src[(i + 7) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 8)] = src[(i + 8) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 9)] = src[(i + 9) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 10)] = src[(i + 10) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 11)] = src[(i + 11) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 12)] = src[(i + 12) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 13)] = src[(i + 13) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 14)] = src[(i + 14) * dim + j];
+            dst[(dim - 1 - j) * dim + (i + 15)] = src[(i + 15) * dim + j];
 
-            //j += 1
-	        dst[(dim - 1 - (j + 1)) * dim + i] = src[i * dim + (j + 1)];
-	        dst[(dim - 1 - (j + 1)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 1)];
-	        dst[(dim - 1 - (j + 1)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 1)];
-	        dst[(dim - 1 - (j + 1)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 1)];
 
-            //j += 2
-	        dst[(dim - 1 - (j + 2)) * dim + i] = src[i * dim + (j + 2)];
-	        dst[(dim - 1 - (j + 2)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 2)];
-	        dst[(dim - 1 - (j + 2)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 2)];
-	        dst[(dim - 1 - (j + 2)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 1)) * dim + i] = src[i * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 1)];
+            dst[(dim - 1 - (j + 1)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 1)];
 
-            //j += 3
-	        dst[(dim - 1 - (j + 3)) * dim + i] = src[i * dim + (j + 3)];
-	        dst[(dim - 1 - (j + 3)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 3)];
-	        dst[(dim - 1 - (j + 3)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 3)];
-	        dst[(dim - 1 - (j + 3)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 3)];
+
+            dst[(dim - 1 - (j + 2)) * dim + i] = src[i * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 2)];
+            dst[(dim - 1 - (j + 2)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 2)];
+
+
+            dst[(dim - 1 - (j + 3)) * dim + i] = src[i * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 3)];
+            dst[(dim - 1 - (j + 3)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 3)];
+
+
+            dst[(dim - 1 - (j + 4)) * dim + i] = src[i * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 4)];
+            dst[(dim - 1 - (j + 4)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 4)];
+
+
+            dst[(dim - 1 - (j + 5)) * dim + i] = src[i * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 5)];
+            dst[(dim - 1 - (j + 5)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 5)];
+
+
+            dst[(dim - 1 - (j + 6)) * dim + i] = src[i * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 6)];
+            dst[(dim - 1 - (j + 6)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 6)];
+
+
+            dst[(dim - 1 - (j + 7)) * dim + i] = src[i * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 7)];
+            dst[(dim - 1 - (j + 7)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 7)];
+
+
+            dst[(dim - 1 - (j + 8)) * dim + i] = src[i * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 8)];
+            dst[(dim - 1 - (j + 8)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 8)];
+
+
+            dst[(dim - 1 - (j + 9)) * dim + i] = src[i * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 9)];
+            dst[(dim - 1 - (j + 9)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 9)];
+
+
+            dst[(dim - 1 - (j + 10)) * dim + i] = src[i * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 10)];
+            dst[(dim - 1 - (j + 10)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 10)];
+
+
+            dst[(dim - 1 - (j + 11)) * dim + i] = src[i * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 11)];
+            dst[(dim - 1 - (j + 11)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 11)];
+
+
+            dst[(dim - 1 - (j + 12)) * dim + i] = src[i * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 12)];
+            dst[(dim - 1 - (j + 12)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 12)];
+
+
+            dst[(dim - 1 - (j + 13)) * dim + i] = src[i * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 13)];
+            dst[(dim - 1 - (j + 13)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 13)];
+
+
+            dst[(dim - 1 - (j + 14)) * dim + i] = src[i * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 14)];
+            dst[(dim - 1 - (j + 14)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 14)];
+
+
+            dst[(dim - 1 - (j + 15)) * dim + i] = src[i * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 1)] = src[(i + 1) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 2)] = src[(i + 2) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 3)] = src[(i + 3) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 4)] = src[(i + 4) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 5)] = src[(i + 5) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 6)] = src[(i + 6) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 7)] = src[(i + 7) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 8)] = src[(i + 8) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 9)] = src[(i + 9) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 10)] = src[(i + 10) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 11)] = src[(i + 11) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 12)] = src[(i + 12) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 13)] = src[(i + 13) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 14)] = src[(i + 14) * dim + (j + 15)];
+            dst[(dim - 1 - (j + 15)) * dim + (i + 15)] = src[(i + 15) * dim + (j + 15)];
         }
 }
 
@@ -309,7 +568,7 @@ void register_rotate_functions()
     add_rotate_function(&attempt_five, rotate_five_descr);   
     add_rotate_function(&attempt_six, rotate_six_descr);   
     add_rotate_function(&attempt_seven, rotate_seven_descr);   
-    //add_rotate_function(&attempt_eight, rotate_eight_descr);   
+    add_rotate_function(&attempt_eight, rotate_eight_descr);   
     //add_rotate_function(&attempt_nine, rotate_nine_descr);   
     //add_rotate_function(&attempt_ten, rotate_ten_descr);   
     //add_rotate_function(&attempt_eleven, rotate_eleven_descr);   
