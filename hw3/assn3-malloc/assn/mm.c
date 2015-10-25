@@ -24,15 +24,15 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "asd",
+    "Farfisa",
     /* First member's full name */
-    "asd d",
+    "Tahia Khan",
     /* First member's email address */
-    "asd@lol.com",
+    "tahia.khan@mail.utoronto.ca",
     /* Second member's full name (leave blank if none) */
-    "asdasd asd",
+    "Miro Kuratczyk",
     /* Second member's email address (leave blank if none) */
-    "sadasd adsasdad"
+    "miro.kuratczyk@mail.utoronto.ca"
 };
 
 /*************************************************************************
