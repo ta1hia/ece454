@@ -1,12 +1,17 @@
 /*
- * This implementation replicates the implicit list implementation
- * provided in the textbook
- * "Computer Systems - A Programmer's Perspective"
- * Blocks are never coalesced or reused.
- * Realloc is implemented directly using mm_malloc and mm_free.
+ * The heap is initialized to 6 blocks with the following structure:
+ * [0|PR HDR|PR PREV_PTR|PR NEXT_PTR|PR FTR|EPI]
  *
- * NOTE TO STUDENTS: Replace this header comment with your own header
- * comment that gives a high level description of your solution.
+ * The free list is initialized to point at the prologue's PREV_PTR and
+ * free blocks are inserted at the head of the free list. The prologue
+ * will always be the tail of the list (so that we can check for the
+ * allocated_bit == 1 when iterating through the free list, since all other
+ * blocks will have allocated_bit == 0).
+ *
+ * Newly freed blocks are added to the free list at the end of coalescing. 
+ * Freed blocks are removed from the free list during allocation in first fit
+ * order.
+ *
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +74,7 @@ team_t team = {
 #define NEXT_FREE_BLKP(bp)  ((void *)(bp + WSIZE))
 #define PUT_PREV_PTR(bp)  (*(void **)(bp))
 #define PUT_NEXT_PTR(bp)  (*(void **)(bp + WSIZE))
-//#define PUT_NEXT_PTR(p,val)      (*(void **)(p) = (val))
+
 int mm_check(void);
 
 void* heap_listp = NULL;
@@ -79,6 +84,10 @@ void* free_listp = NULL;
  * mm_init
  * Initialize the heap, including "allocation" of the
  * prologue and epilogue
+ *
+ * This sets up a heap of 6 blocks with the following 
+ * structure:
+ * [0|PR HDR|PR PREV_PTR|PR NEXT_PTR|PR FTR|EPI]
  **********************************************************/
  int mm_init(void)
  {
@@ -91,7 +100,7 @@ void* free_listp = NULL;
      PUT(heap_listp + (4 * WSIZE), PACK(2*DSIZE, 1));   // prologue footer
      PUT(heap_listp + (5 * WSIZE), PACK(0, 1));    // epilogue header
      heap_listp += DSIZE;
-     free_listp= heap_listp;
+     free_listp= heap_listp; /* Initialize free list to point at the prologue */
 
      mm_check();
      return 0;
@@ -318,14 +327,13 @@ void *mm_realloc(void *ptr, size_t size)
 int mm_check(void){
     void * bp;
     
-    printf("checking\n");
     /* validate prologue */
     if (GET_SIZE(HDRP(heap_listp)) != 2*DSIZE && !GET_ALLOC(HDRP(heap_listp)) && HDRP(heap_listp) != FTRP(heap_listp)) {
         printf("prologue invalid");
         return 0;
     }
 
-    /* free_list */
+    /* free_list (initial check, remove later) */
     if (GET_SIZE(HDRP(free_listp)) != 2*DSIZE && !GET_ALLOC(HDRP(free_listp)) && HDRP(free_listp) != FTRP(free_listp)) {
         printf("initial free list invalid");
         return 0;
