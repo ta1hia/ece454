@@ -76,6 +76,7 @@ team_t team = {
 #define PUT_NEXT_PTR(bp)  (*(void **)(bp + WSIZE))
 
 int mm_check(void);
+void  mm_print_block(void * bp);
 
 void* heap_listp = NULL;
 void* free_listp = NULL;
@@ -101,6 +102,9 @@ void* free_listp = NULL;
      PUT(heap_listp + (5 * WSIZE), PACK(0, 1));    // epilogue header
      heap_listp += DSIZE;
      free_listp= heap_listp; /* Initialize free list to point at the prologue */
+     printf("INIT printing:\n");
+     mm_print_block(heap_listp);
+     mm_print_block(free_listp);
 
      mm_check();
      return 0;
@@ -283,6 +287,11 @@ void *mm_malloc(size_t size)
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
         return NULL;
     place(bp, asize);
+
+    if (mem_heapsize() == 6857536) {
+        printf("heapsize %zu\n", mem_heapsize());
+        mm_check();
+    }
     return bp;
 
 }
@@ -326,36 +335,91 @@ void *mm_realloc(void *ptr, size_t size)
  *********************************************************/
 int mm_check(void){
     void * bp;
+    void * pp;
+    void * np;
+
+    int count_exp_free, count_imp_free, count_imp_allocated;
+    int success = 1;
     
     /* validate prologue */
     if (GET_SIZE(HDRP(heap_listp)) != 2*DSIZE && !GET_ALLOC(HDRP(heap_listp)) && HDRP(heap_listp) != FTRP(heap_listp)) {
         printf("prologue invalid");
-        return 0;
+        success = 0;
     }
 
-    /* free_list (initial check, remove later) */
-    if (GET_SIZE(HDRP(free_listp)) != 2*DSIZE && !GET_ALLOC(HDRP(free_listp)) && HDRP(free_listp) != FTRP(free_listp)) {
-        printf("initial free list invalid");
-        return 0;
-    }
-
-    /* check every block*/
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)){
-    }
-
-    /* check free list */
-    int num_free=0;
+    /* Is every block in the free list marked as free? */
+    count_exp_free = 0;
     for (bp = free_listp; !GET_ALLOC(HDRP(bp)); bp = NEXT_FREE_BLKP(bp)) {
-        //print hdr[size:allocated] [nxt] [prev] ft[size:allocated]
-        num_free += 1;
-
+        count_exp_free += 1;
+        if (GET_ALLOC(HDRP(bp)) != 0 && bp != (heap_listp + DSIZE)){
+            printf("block in free list not marked as free\n");
+            success = 0;
+        }
+        if (HDRP(bp) != FTRP(bp)) {
+            printf("invalid header and footer on free block\n");
+            success = 0;
+        }
+        pp = PREV_FREE_BLKP(bp);
+        np = NEXT_FREE_BLKP(bp);
+        if (np < mem_heap_lo() || np > mem_heap_hi()) {
+            printf("NEXT_BLKP of free block (%p) is not a valid heap pointer\n", bp);
+            success = 0;
+        }
+        if (pp < mem_heap_lo() || pp > mem_heap_hi()) {
+            printf("PREV_BLKP of free block (%p) is not a valid heap pointer\n", bp);
+            success = 0;
+        }
+        if (bp != free_listp && bp != (heap_listp + DSIZE)) {
+            if (NEXT_FREE_BLKP(pp) != bp) {
+                printf("block in freelist has invalid PREV_BLKP\n");
+                success = 0;
+            }
+            if (PREV_FREE_BLKP(np) != bp) {
+                printf("block in freelist has invalid NEXT_BLKP\n");
+                success = 0;
+            }
+        }
     }
-    if (num_free > 0) {
-        printf("free blocks: %d\n", num_free);
+
+
+    /* Check every block in the implicit list */
+    count_imp_free = 0;
+    count_imp_allocated = 0;
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)){
+        /* If a block is marked free, it should be pointing into the free list */
+        if (GET_ALLOC(HDRP(bp)) == 0) {
+            count_imp_free += 1;
+            if (bp != free_listp && bp != heap_listp ) {
+                if (NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) != bp && PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) != bp) {
+                    printf("block in freelist has invalid PREV_BLKP and NEXT_BLKP\n");
+                    mm_print_block(bp);
+                    mm_print_block(free_listp);
+                    mm_print_block(heap_listp);
+                    success = 0;
+                }
+            }
+        }
+        if (GET_ALLOC(HDRP(bp)) == 1) {
+                count_imp_allocated += 1;
+        }
     }
 
-    /* validate epilogue */
-    return 1;
+    /* TODO: validate epilogue */
+
+    printf("MM_CHECK:\nexplicit free: %d  implicit free: %d  implicit allocated: %d\n", count_exp_free, count_imp_free, count_imp_allocated);
+    return success;
+}
+
+void  mm_print_block(void * bp) {
+    size_t fsize, hsize;
+    int halloc, falloc;
+
+    falloc = GET_ALLOC(HDRP(bp));
+    halloc = GET_ALLOC(FTRP(bp));
+    fsize = GET_SIZE(HDRP(bp));
+    hsize = GET_SIZE(FTRP(bp));
+
+    printf("%p hdr[%zu|%d] ftr[%zu:%d]\n", bp, hsize,halloc,fsize,falloc);
 }
 
 
