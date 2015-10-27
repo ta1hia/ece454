@@ -70,13 +70,15 @@ team_t team = {
 #define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
 
 /* Added macros */
-#define PREV_FREE_BLKP(bp)  ((void *)(bp))
-#define NEXT_FREE_BLKP(bp)  ((void *)(bp + WSIZE))
-#define PUT_PREV_PTR(bp)  (*(void **)(bp))
-#define PUT_NEXT_PTR(bp)  (*(void **)(bp + WSIZE))
+#define LOL_PREV_FREE_BLKP(bp)  ((void *)(bp)) //dont work
+#define LOL_NEXT_FREE_BLKP(bp)  ((void *)(bp + WSIZE)) //dont work
+#define PREV_FREE_BLKP(bp)  (*(void **)(bp))
+#define NEXT_FREE_BLKP(bp)  (*(void **)(bp + WSIZE))
 
 int mm_check(void);
 void  mm_print_block(void * bp);
+void  mm_print_free_list(void);
+void splice_free_block(void * bp);
 
 void* heap_listp = NULL;
 void* free_listp = NULL;
@@ -102,11 +104,8 @@ void* free_listp = NULL;
      PUT(heap_listp + (5 * WSIZE), PACK(0, 1));    // epilogue header
      heap_listp += DSIZE;
      free_listp= heap_listp; /* Initialize free list to point at the prologue */
-     printf("INIT printing:\n");
-     mm_print_block(heap_listp);
-     mm_print_block(free_listp);
 
-     mm_check();
+     //mm_check();
      return 0;
  }
 
@@ -124,40 +123,40 @@ void *coalesce(void *bp)
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
 
-    if (prev_alloc && next_alloc) {       /* Case 1 */
-        //return bp;
+    if (prev_alloc && next_alloc) {       /* Case 1 afa*/
     }
 
-    else if (prev_alloc && !next_alloc) { /* Case 2 */
+    else if (prev_alloc && !next_alloc) { /* Case 2 aff*/
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
+        splice_free_block(NEXT_BLKP(bp));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
-        //return (bp);
     }
 
-    else if (!prev_alloc && next_alloc) { /* Case 3 */
+    else if (!prev_alloc && next_alloc) { /* Case 3 ffa*/
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
+        splice_free_block(PREV_BLKP(bp));
         PUT(FTRP(bp), PACK(size, 0));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
-        //return (PREV_BLKP(bp));
         bp = (PREV_BLKP(bp));
     }
 
-    else {            /* Case 4 */
+    else {            /* Case 4 fff*/
         size += GET_SIZE(HDRP(PREV_BLKP(bp)))  +
             GET_SIZE(FTRP(NEXT_BLKP(bp)))  ;
+        splice_free_block(PREV_BLKP(bp));
+        splice_free_block(NEXT_BLKP(bp));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
-        //return (PREV_BLKP(bp));
         bp = (PREV_BLKP(bp));
     }
 
     /* adjust free list */
-    PUT_PREV_PTR(bp) = NULL;
-    PUT_NEXT_PTR(bp) = free_listp;
-    PUT_PREV_PTR(free_listp) = bp;
+    PREV_FREE_BLKP(bp) = NULL;
+    NEXT_FREE_BLKP(bp) = free_listp;
+    PREV_FREE_BLKP(free_listp) = bp;
     free_listp = bp;
-    
+
     return bp;
 }
 
@@ -229,8 +228,14 @@ void place(void* bp, size_t asize)
   size_t bsize = GET_SIZE(HDRP(bp));
 
   /* splice out this block from the free list*/
-  PUT_NEXT_PTR(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
-  PUT_PREV_PTR(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
+  if (bp == free_listp) {
+      free_listp = NEXT_FREE_BLKP(bp);
+      PREV_FREE_BLKP(free_listp) = NULL;
+      NEXT_FREE_BLKP(bp) = NULL;
+  } else {
+      NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
+      PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
+  }
 
   PUT(HDRP(bp), PACK(bsize, 1));
   PUT(FTRP(bp), PACK(bsize, 1));
@@ -245,10 +250,15 @@ void mm_free(void *bp)
     if(bp == NULL){
       return;
     }
+    if (!GET_ALLOC(HDRP(bp))) {
+        return;
+    }
     size_t size = GET_SIZE(HDRP(bp));
     PUT(HDRP(bp), PACK(size,0));
     PUT(FTRP(bp), PACK(size,0));
     coalesce(bp);
+
+    //mm_check();
 }
 
 
@@ -266,6 +276,7 @@ void *mm_malloc(size_t size)
     size_t extendsize; /* amount to extend heap if no fit */
     char * bp;
 
+
     /* Ignore spurious requests */
     if (size == 0)
         return NULL;
@@ -279,6 +290,7 @@ void *mm_malloc(size_t size)
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
+        //mm_check();
         return bp;
     }
 
@@ -288,10 +300,11 @@ void *mm_malloc(size_t size)
         return NULL;
     place(bp, asize);
 
-    if (mem_heapsize() == 6857536) {
+    /*//if (mem_heapsize() == 6857536) {
+    if (mem_heapsize() == 8272) {
         printf("heapsize %zu\n", mem_heapsize());
         mm_check();
-    }
+    }*/
     return bp;
 
 }
@@ -355,28 +368,30 @@ int mm_check(void){
             printf("block in free list not marked as free\n");
             success = 0;
         }
-        if (HDRP(bp) != FTRP(bp)) {
+        if (GET(HDRP(bp)) != GET(FTRP(bp))) {
             printf("invalid header and footer on free block\n");
             success = 0;
+            break;
         }
         pp = PREV_FREE_BLKP(bp);
         np = NEXT_FREE_BLKP(bp);
         if (np < mem_heap_lo() || np > mem_heap_hi()) {
-            printf("NEXT_BLKP of free block (%p) is not a valid heap pointer\n", bp);
+            printf("NEXT_BLKP (%p) of free block (%p) is not a valid heap pointer\n", np, bp);
             success = 0;
         }
-        if (pp < mem_heap_lo() || pp > mem_heap_hi()) {
-            printf("PREV_BLKP of free block (%p) is not a valid heap pointer\n", bp);
+        if (bp != free_listp && (pp < mem_heap_lo() || pp > mem_heap_hi())) {
+            printf("PREV_BLKP (%p) of free block (%p) is not a valid heap pointer\n", pp, bp);
             success = 0;
         }
         if (bp != free_listp && bp != (heap_listp + DSIZE)) {
             if (NEXT_FREE_BLKP(pp) != bp) {
-                printf("block in freelist has invalid PREV_BLKP\n");
+                printf("block (%p) in freelist has invalid PREV_BLKP (%p)\n", bp, pp);
                 success = 0;
             }
             if (PREV_FREE_BLKP(np) != bp) {
-                printf("block in freelist has invalid NEXT_BLKP\n");
+                printf("block (%p) in freelist has invalid NEXT_BLKP (%p)\n", bp, np);
                 success = 0;
+                break;
             }
         }
     }
@@ -392,9 +407,6 @@ int mm_check(void){
             if (bp != free_listp && bp != heap_listp ) {
                 if (NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) != bp && PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) != bp) {
                     printf("block in freelist has invalid PREV_BLKP and NEXT_BLKP\n");
-                    mm_print_block(bp);
-                    mm_print_block(free_listp);
-                    mm_print_block(heap_listp);
                     success = 0;
                 }
             }
@@ -420,6 +432,23 @@ void  mm_print_block(void * bp) {
     hsize = GET_SIZE(FTRP(bp));
 
     printf("%p hdr[%zu|%d] ftr[%zu:%d]\n", bp, hsize,halloc,fsize,falloc);
+}
+
+void  mm_print_free_list(void) {
+    void * bp;
+    for (bp = free_listp; !GET_ALLOC(HDRP(bp)); bp = NEXT_FREE_BLKP(bp)) {
+        mm_print_block(bp);
+    }
+}
+
+void splice_free_block(void * bp) {
+    if (bp != free_listp) {
+      NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
+      PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
+    } else {
+        free_listp = NEXT_FREE_BLKP(bp);
+        PREV_FREE_BLKP(free_listp) = NULL;
+    }
 }
 
 
