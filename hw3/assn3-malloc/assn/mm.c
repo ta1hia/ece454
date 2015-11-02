@@ -72,6 +72,7 @@ team_t team = {
 /* Added macros */
 #define PREV_FREE_BLKP(bp)  (*(void **)(bp))
 #define NEXT_FREE_BLKP(bp)  (*(void **)(bp + WSIZE))
+#define HEAD_OF_SEG(bp)     (*(void **)(bp))
 
 #define NUM_SEG_LISTS       (12)
 
@@ -80,7 +81,10 @@ int mm_check_init(void);
 void  print_block(void * bp);
 void  print_free_list(void);
 void  print_implicit_list(void);
-void splice_free_block(void * bp);
+void  splice_free_block(void * bp);
+void  splice_buddy(void * bp);
+void  add_buddy(void *bp);
+void* get_seg_list(size_t size);
 size_t next_power_of_two(size_t v);
 
 void* heap_listp = NULL;
@@ -528,4 +532,81 @@ size_t next_power_of_two(size_t v) {
     return v;
 }
 
+void splice_buddy(void * bp) {
+    void* head;
+    head = get_seg_list(GET_SIZE(HDRP(bp)));
 
+    if (!GET(head)) { /* splice should not have been called if this seg list is empty */
+        printf("this seg list is empty, wtfffff\n");
+        return;
+    }
+
+    if (HEAD_OF_SEG(head) == bp) { /* bp is the head of this seg list */
+        if (NEXT_FREE_BLKP(bp)) {  /* set the next free block as head of seg list */
+            head = NEXT_FREE_BLKP(bp);
+            PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = NULL;
+        } else {                   /* bp is the only block in this seg list so empty it */
+            PUT(head, 0);
+            PREV_FREE_BLKP(bp) = NULL;
+            NEXT_FREE_BLKP(bp) = NULL;
+        }
+    } else {                       /* bp is somewhere in seg list */
+      NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
+      if (NEXT_FREE_BLKP(bp)) {   /* check if bp is last block in seg list */
+          PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
+      }
+    }
+}
+
+void add_buddy(void *bp) {
+    void *head;
+    void *head_fp;
+    head = get_seg_list(GET_SIZE(HDRP(bp)));
+
+    if (!GET(head)) { /* this seg list is empty */
+        head = bp;
+        PREV_FREE_BLKP(bp) = NULL;
+        NEXT_FREE_BLKP(bp) = NULL;
+        return;
+    }
+    
+    /* add buddy to head of appropriate seg list */
+    head_fp = HEAD_OF_SEG(head);
+    NEXT_FREE_BLKP(bp) = head_fp;
+    PREV_FREE_BLKP(bp) = NULL;
+    PREV_FREE_BLKP(head_fp) = bp;
+    head = bp;
+    return;
+}
+
+
+
+// couldnt think of a smarter / easier way to do this
+void* get_seg_list(size_t size) {
+    switch(size) {
+        case 1:
+            return heap_listp + ( 0* WSIZE);
+        case 2:
+            return heap_listp + ( 1* WSIZE);
+        case 4:
+            return heap_listp + ( 2* WSIZE);
+        case 8:
+            return heap_listp + ( 3* WSIZE);
+        case 16:
+            return heap_listp + ( 4* WSIZE);
+        case 32:                                //really seg list should start here (32 is min size)
+            return heap_listp + ( 5* WSIZE);
+        case 64:
+            return heap_listp + ( 6* WSIZE);
+        case 128:
+            return heap_listp + ( 7* WSIZE);
+        case 512:
+            return heap_listp + ( 8* WSIZE);
+        case 1024:
+            return heap_listp + ( 9* WSIZE);
+        case 2048:
+            return heap_listp + (10* WSIZE);
+        default:
+            return heap_listp + (11* WSIZE);  // stick sizes larger than 2048 here (they'll still be powers of 2)
+    }
+}
