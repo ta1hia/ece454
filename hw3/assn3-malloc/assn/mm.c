@@ -70,18 +70,27 @@ team_t team = {
 #define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
 
 /* Added macros */
-#define LOL_PREV_FREE_BLKP(bp)  ((void *)(bp)) //dont work
-#define LOL_NEXT_FREE_BLKP(bp)  ((void *)(bp + WSIZE)) //dont work
 #define PREV_FREE_BLKP(bp)  (*(void **)(bp))
 #define NEXT_FREE_BLKP(bp)  (*(void **)(bp + WSIZE))
 
+#define NUM_SEG_LISTS       (12)
+
 int mm_check(void);
-void  mm_print_block(void * bp);
-void  mm_print_free_list(void);
+int mm_check_init(void);
+void  print_block(void * bp);
+void  print_free_list(void);
+void  print_implicit_list(void);
 void splice_free_block(void * bp);
+size_t next_power_of_two(size_t v);
 
 void* heap_listp = NULL;
 void* free_listp = NULL;
+
+//void*buddy_listp = NULL; 
+//should be a linked list of pointers which point to the head
+//of segregated buddy lists
+//1, 2, 4, 8, 16, 32, 64, 128, 256,512, 1024, other; 12 in total
+
 
 /**********************************************************
  * mm_init
@@ -94,8 +103,9 @@ void* free_listp = NULL;
  **********************************************************/
  int mm_init(void)
  {
-   if ((heap_listp = mem_sbrk(6*WSIZE)) == (void *)-1)
+   if ((heap_listp = mem_sbrk(16*WSIZE)) == (void *)-1)
          return -1;
+   /*
      PUT(heap_listp, 0);                         // alignment padding
      PUT(heap_listp + (1 * WSIZE), PACK(2*DSIZE, 1));   // prologue header
      PUT(heap_listp + (2 * WSIZE), 0);   // prologue PREV_PTR
@@ -103,10 +113,26 @@ void* free_listp = NULL;
      PUT(heap_listp + (4 * WSIZE), PACK(2*DSIZE, 1));   // prologue footer
      PUT(heap_listp + (5 * WSIZE), PACK(0, 1));    // epilogue header
      heap_listp += DSIZE;
-     free_listp= heap_listp; /* Initialize free list to point at the prologue */
+     free_listp= heap_listp; 
+   */
 
-     //mm_check();
-     return 0;
+   /* Initialize heap list */
+   int i;
+   for (i = 0; i < NUM_SEG_LISTS + 4; i++) {
+       PUT(heap_listp + (i * WSIZE), 0); 
+   }
+
+   /* Initialize prologue and epilogue */
+   PUT(heap_listp + ( 1 * WSIZE), PACK(14*WSIZE, 1));   // prologue header
+   PUT(heap_listp + (14 * WSIZE), PACK(14*WSIZE, 1));   // prologue footer
+   PUT(heap_listp + (15 * WSIZE), PACK(0, 1));          // epilogue header
+
+   heap_listp += DSIZE;
+   free_listp= heap_listp; /* Initialize free list to point at the prologue */
+
+   mm_check_init();
+   return 0;
+   
  }
 
 /**********************************************************
@@ -207,7 +233,7 @@ void * find_fit(size_t asize)
     void *bp;
 
     /* Iterate through explicit free list */
-    for (bp = free_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp))
+    for (bp = free_listp; GET_SIZE(HDRP(bp)) > 0 && !GET_ALLOC(HDRP(bp)); bp = NEXT_BLKP(bp))
     {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))))
         {
@@ -276,21 +302,21 @@ void *mm_malloc(size_t size)
     size_t extendsize; /* amount to extend heap if no fit */
     char * bp;
 
-
     /* Ignore spurious requests */
     if (size == 0)
         return NULL;
 
     /* Adjust block size to include overhead and alignment reqs. */
-    if (size <= DSIZE)
+    if (size <= DSIZE) 
         asize = 2 * DSIZE;
-    else
-        asize = DSIZE * ((size + (DSIZE) + (DSIZE-1))/ DSIZE);
+    else {
+        asize  = DSIZE * ((size + (DSIZE) + (DSIZE-1))/ DSIZE);
+        asize = next_power_of_two(asize);
+    }
 
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
-        //mm_check();
         return bp;
     }
 
@@ -305,6 +331,8 @@ void *mm_malloc(size_t size)
         printf("heapsize %zu\n", mem_heapsize());
         mm_check();
     }*/
+    mm_check();
+
     return bp;
 
 }
@@ -351,11 +379,13 @@ int mm_check(void){
     void * pp;
     void * np;
 
+    size_t size;
+
     int count_exp_free, count_imp_free, count_imp_allocated;
     int success = 1;
     
     /* validate prologue */
-    if (GET_SIZE(HDRP(heap_listp)) != 2*DSIZE && !GET_ALLOC(HDRP(heap_listp)) && HDRP(heap_listp) != FTRP(heap_listp)) {
+    if (GET_SIZE(HDRP(heap_listp)) != 14*WSIZE && !GET_ALLOC(HDRP(heap_listp)) && HDRP(heap_listp) != FTRP(heap_listp)) {
         printf("prologue invalid");
         success = 0;
     }
@@ -414,6 +444,12 @@ int mm_check(void){
         if (GET_ALLOC(HDRP(bp)) == 1) {
                 count_imp_allocated += 1;
         }
+        /* Check that block is a power of 2 (buddy allocation */
+        size = GET_SIZE(HDRP(bp));
+        if ((size & (size - 1)) == 0) {
+            printf("block (%p) does not follow buddy allocation, %zu\n", size);
+            success = 0;
+        }
     }
 
     /* TODO: validate epilogue */
@@ -422,7 +458,26 @@ int mm_check(void){
     return success;
 }
 
-void  mm_print_block(void * bp) {
+int mm_check_init(void) {
+    void * bp;
+    int success = 1;
+
+    /* validate prologue */
+    if (GET_SIZE(HDRP(heap_listp)) != 16*DSIZE && !GET_ALLOC(HDRP(heap_listp)) && HDRP(heap_listp) != FTRP(heap_listp)) {
+        printf("prologue invalid");
+        success = 0;
+    }
+
+    /* validate epilogue */
+    bp = mem_heap_lo();
+    if (!GET_ALLOC(bp) && GET_SIZE(bp)) {
+        printf("epilogue invalid"); 
+        success = 0;
+    }
+    return success;
+}
+
+void  print_block(void * bp) {
     size_t fsize, hsize;
     int halloc, falloc;
 
@@ -431,13 +486,23 @@ void  mm_print_block(void * bp) {
     fsize = GET_SIZE(HDRP(bp));
     hsize = GET_SIZE(FTRP(bp));
 
-    printf("%p hdr[%zu|%d] ftr[%zu:%d]\n", bp, hsize,halloc,fsize,falloc);
+    if (hsize == 0 && halloc == 1)
+        printf("%p hdr[%zu|%d]\n", bp, hsize,halloc);
+    else
+        printf("%p hdr[%zu|%d] ftr[%zu:%d]\n", bp, hsize,halloc,fsize,falloc);
 }
 
-void  mm_print_free_list(void) {
+void  print_free_list(void) {
     void * bp;
     for (bp = free_listp; !GET_ALLOC(HDRP(bp)); bp = NEXT_FREE_BLKP(bp)) {
-        mm_print_block(bp);
+        print_block(bp);
+    }
+}
+
+void  print_implicit_list(void) {
+    void * bp;
+    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        print_block(bp);
     }
 }
 
@@ -451,5 +516,16 @@ void splice_free_block(void * bp) {
     }
 }
 
+
+size_t next_power_of_two(size_t v) {
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
 
 
