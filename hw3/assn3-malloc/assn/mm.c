@@ -147,6 +147,47 @@ void* free_listp = NULL;
  * - the previous block is available for coalescing
  * - both neighbours are available for coalescing
  **********************************************************/
+void *coalesce_buddy(void *bp)
+{
+    size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
+    size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
+    size_t size = GET_SIZE(HDRP(bp));
+    size_t size_p = GET_SIZE(HDRP(PREV_BLKP(bp)));
+    size_t size_n = GET_SIZE(HDRP(NEXT_BLKP(bp)));
+
+    if (prev_alloc && next_alloc) {       /* Case 1 afa*/
+    }
+
+    else if (!prev_alloc && !next_alloc && size == size_p && size == size_n) { /* Case 4 fff */
+        size += size_p + size_n;
+        splice_buddy(PREV_BLKP(bp));
+        splice_buddy(NEXT_BLKP(bp));
+        PUT(HDRP(PREV_BLKP(bp)), PACK(size,0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(size,0));
+        bp = (PREV_BLKP(bp));
+    }
+
+    else if (prev_alloc && !next_alloc && size == size_n) { /* Case 2 aff*/
+        size += size_n;
+        splice_buddy(NEXT_BLKP(bp));
+        PUT(HDRP(bp), PACK(size, 0));
+        PUT(FTRP(bp), PACK(size, 0));
+    }
+
+    else if (!prev_alloc && next_alloc && size == size_p) { /* Case 3 ffa*/
+        size += size_p;
+        splice_buddy(PREV_BLKP(bp));
+        PUT(FTRP(bp), PACK(size, 0));
+        PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+        bp = (PREV_BLKP(bp));
+    }
+
+    /* adjust free list */
+    add_buddy(bp);
+
+    return bp;
+}
+
 void *coalesce(void *bp)
 {
     size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
