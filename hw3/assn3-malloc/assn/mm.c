@@ -85,6 +85,7 @@ void  splice_free_block(void * bp);
 void  splice_buddy(void * bp);
 void  add_buddy(void *bp);
 void* get_seg_list(size_t size);
+void * find_fit_buddy(size_t asize);
 size_t next_power_of_two(size_t v);
 
 void* heap_listp = NULL;
@@ -263,6 +264,28 @@ void *extend_heap(size_t words)
  * Return NULL if no free blocks can handle that size
  * Assumed that asize is aligned
  **********************************************************/
+void * find_fit_buddy(size_t asize)
+{
+    void *bp;
+    bp = get_seg_list(asize);
+
+    if (!bp && asize == 4096){ /* no suitable free blocks in any seg list -> should extend heap */
+        return NULL;
+    }
+    if (!bp) /* no free blocks in this seg list -> try next size */
+        bp = find_fit_buddy(next_power_of_two(asize));
+    else {   /* there's free blocks of this size -> take head of list */
+        bp = HEAD_OF_SEG(bp);
+        splice_buddy(bp);
+        return bp;
+    }
+
+    if (GET_SIZE(HDRP(bp)) != asize) { /* should split into buddies if we found a larger size */
+        //printf("should split the buddy\n");
+        //TODO: SPLIT THE BUDDY
+    }
+    return bp;
+}
 void * find_fit(size_t asize)
 {
     /*void *bp;
@@ -278,7 +301,7 @@ void * find_fit(size_t asize)
     void *bp;
 
     /* Iterate through explicit free list */
-    for (bp = free_listp; GET_SIZE(HDRP(bp)) > 0 && !GET_ALLOC(HDRP(bp)); bp = NEXT_BLKP(bp))
+    for (bp = free_listp; GET_SIZE(HDRP(bp)) > 0 && !GET_ALLOC(HDRP(bp)); bp = NEXT_BLKP(bp)) //<-- this looks wrong
     {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp))))
         {
