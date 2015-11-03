@@ -74,7 +74,11 @@ team_t team = {
 #define NEXT_FREE_BLKP(bp)  (*(void **)(bp + WSIZE))
 #define HEAD_OF_SEG(bp)     (*(void **)(bp))
 
-#define NUM_SEG_LISTS       (12)
+/* Read and write a pointer at address p */
+#define GETP(p)          (*(uintptr_t **)(p))
+#define PUTP(p,val)      (*(uintptr_t **)(p) = (uintptr_t *)val)
+
+#define NUM_SEG_LISTS       (14)
 
 int mm_check(void);
 int mm_check_init(void);
@@ -108,7 +112,7 @@ void* free_listp = NULL;
  **********************************************************/
  int mm_init(void)
  {
-   if ((heap_listp = mem_sbrk(16*WSIZE)) == (void *)-1)
+   if ((heap_listp = mem_sbrk(18*WSIZE)) == (void *)-1)
          return -1;
    /*
      PUT(heap_listp, 0);                         // alignment padding
@@ -128,9 +132,9 @@ void* free_listp = NULL;
    }
 
    /* Initialize prologue and epilogue */
-   PUT(heap_listp + ( 1 * WSIZE), PACK(14*WSIZE, 1));   // prologue header
-   PUT(heap_listp + (14 * WSIZE), PACK(14*WSIZE, 1));   // prologue footer
-   PUT(heap_listp + (15 * WSIZE), PACK(0, 1));          // epilogue header
+   PUT(heap_listp + ( 1 * WSIZE), PACK(16*WSIZE, 1));   // prologue header
+   PUT(heap_listp + (16 * WSIZE), PACK(16*WSIZE, 1));   // prologue footer
+   PUT(heap_listp + (17 * WSIZE), PACK(0, 1));          // epilogue header
 
    heap_listp += DSIZE;
    free_listp= heap_listp; /* Initialize free list to point at the prologue */
@@ -157,9 +161,11 @@ void *coalesce_buddy(void *bp)
     size_t size_n = GET_SIZE(HDRP(NEXT_BLKP(bp)));
 
     if (prev_alloc && next_alloc) {       /* Case 1 afa*/
+        printf("case1\n");
     }
 
     else if (!prev_alloc && !next_alloc && size == size_p && size == size_n) { /* Case 4 fff */
+        printf("case4\n");
         size += size_p + size_n;
         splice_buddy(PREV_BLKP(bp));
         splice_buddy(NEXT_BLKP(bp));
@@ -169,6 +175,7 @@ void *coalesce_buddy(void *bp)
     }
 
     else if (prev_alloc && !next_alloc && size == size_n) { /* Case 2 aff*/
+        printf("case2\n");
         size += size_n;
         splice_buddy(NEXT_BLKP(bp));
         PUT(HDRP(bp), PACK(size, 0));
@@ -176,6 +183,7 @@ void *coalesce_buddy(void *bp)
     }
 
     else if (!prev_alloc && next_alloc && size == size_p) { /* Case 3 ffa*/
+        printf("case3\n");
         size += size_p;
         splice_buddy(PREV_BLKP(bp));
         PUT(FTRP(bp), PACK(size, 0));
@@ -253,8 +261,7 @@ void *extend_heap(size_t words)
     PUT(FTRP(bp), PACK(size, 0));                // free block footer
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));        // new epilogue header
 
-    /* Coalesce if the previous block was free */
-    return coalesce(bp);
+    return coalesce_buddy(bp);
 }
 
 
@@ -268,12 +275,13 @@ void * find_fit_buddy(size_t asize)
 {
     void *bp;
     bp = get_seg_list(asize);
+    printf("FIND_FIT %zu \n", asize);
 
-    if (!bp && asize == 4096){ /* no suitable free blocks in any seg list -> should extend heap */
+    if (!GET(bp) && asize >= 4096){ /* no suitable free blocks in any seg list -> should extend heap */
         return NULL;
     }
-    if (!bp) /* no free blocks in this seg list -> try next size */
-        bp = find_fit_buddy(next_power_of_two(asize));
+    if (!GET(bp)) /* no free blocks in this seg list -> try next size */
+        bp = find_fit_buddy(next_power_of_two(asize+1));
     else {   /* there's free blocks of this size -> take head of list */
         bp = HEAD_OF_SEG(bp);
         splice_buddy(bp);
@@ -286,6 +294,7 @@ void * find_fit_buddy(size_t asize)
     }
     return bp;
 }
+
 void * find_fit(size_t asize)
 {
     /*void *bp;
@@ -321,7 +330,7 @@ void place(void* bp, size_t asize)
   /* Get the current block size */
   size_t bsize = GET_SIZE(HDRP(bp));
 
-  /* splice out this block from the free list*/
+  /* splice out this block from the free list
   if (bp == free_listp) {
       free_listp = NEXT_FREE_BLKP(bp);
       PREV_FREE_BLKP(free_listp) = NULL;
@@ -329,7 +338,7 @@ void place(void* bp, size_t asize)
   } else {
       NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
       PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
-  }
+  }*/
 
   PUT(HDRP(bp), PACK(bsize, 1));
   PUT(FTRP(bp), PACK(bsize, 1));
@@ -341,6 +350,8 @@ void place(void* bp, size_t asize)
  **********************************************************/
 void mm_free(void *bp)
 {
+
+    printf("free %zu\n", GET_SIZE(HDRP(bp)));
     if(bp == NULL){
       return;
     }
@@ -350,7 +361,7 @@ void mm_free(void *bp)
     size_t size = GET_SIZE(HDRP(bp));
     PUT(HDRP(bp), PACK(size,0));
     PUT(FTRP(bp), PACK(size,0));
-    coalesce(bp);
+    coalesce_buddy(bp);
 
     //mm_check();
 }
@@ -370,6 +381,7 @@ void *mm_malloc(size_t size)
     size_t extendsize; /* amount to extend heap if no fit */
     char * bp;
 
+    printf("malloc %zu", size);
     /* Ignore spurious requests */
     if (size == 0)
         return NULL;
@@ -381,9 +393,11 @@ void *mm_malloc(size_t size)
         asize  = DSIZE * ((size + (DSIZE) + (DSIZE-1))/ DSIZE);
         asize = next_power_of_two(asize);
     }
+    printf(" %zu\n", asize);
 
+   
     /* Search the free list for a fit */
-    if ((bp = find_fit(asize)) != NULL) {
+    if ((bp = find_fit_buddy(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
@@ -391,7 +405,9 @@ void *mm_malloc(size_t size)
     /* No fit found. Get more memory and place the block */
     extendsize = MAX(asize, CHUNKSIZE);
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
+        //TODO: since extend heap does coalesce, check if this block needs buddy splitting
         return NULL;
+    splice_buddy(bp);
     place(bp, asize);
 
     /*//if (mem_heapsize() == 6857536) {
@@ -399,7 +415,6 @@ void *mm_malloc(size_t size)
         printf("heapsize %zu\n", mem_heapsize());
         mm_check();
     }*/
-    mm_check();
 
     return bp;
 
@@ -514,8 +529,8 @@ int mm_check(void){
         }
         /* Check that block is a power of 2 (buddy allocation */
         size = GET_SIZE(HDRP(bp));
-        if ((size & (size - 1)) == 0) {
-            printf("block (%p) does not follow buddy allocation, %zu\n", size);
+        if (bp != heap_listp && (size & (size - 1)) != 0) {
+            printf("block (%p) does not follow buddy allocation, %zu\n", bp, size);
             success = 0;
         }
     }
@@ -532,14 +547,21 @@ int mm_check_init(void) {
 
     /* validate prologue */
     if (GET_SIZE(HDRP(heap_listp)) != 16*DSIZE && !GET_ALLOC(HDRP(heap_listp)) && HDRP(heap_listp) != FTRP(heap_listp)) {
-        printf("prologue invalid");
+        printf("prologue invalid\n");
         success = 0;
+    }
+
+    for (bp = heap_listp;bp != heap_listp + NUM_SEG_LISTS*WSIZE; bp += WSIZE) {
+        if (GET(bp)){
+            printf("all seg lists should be empty initially %p %p\n", bp, HEAD_OF_SEG(bp));
+            success = 0;
+        }
     }
 
     /* validate epilogue */
     bp = mem_heap_lo();
     if (!GET_ALLOC(bp) && GET_SIZE(bp)) {
-        printf("epilogue invalid"); 
+        printf("epilogue invalid\n"); 
         success = 0;
     }
     return success;
@@ -562,9 +584,20 @@ void  print_block(void * bp) {
 
 void  print_free_list(void) {
     void * bp;
-    for (bp = free_listp; !GET_ALLOC(HDRP(bp)); bp = NEXT_FREE_BLKP(bp)) {
-        print_block(bp);
+    void * lp;
+    size_t size;
+    for (size = 1;size <= 32768; size = size*2) {
+        printf("seg free list (size %zu)\n", size);
+        bp = get_seg_list(size);
+        if (!GET(bp)) {
+            continue;
+        }
+        lp = GETP(bp);
+        for (; lp != NULL; lp = NEXT_FREE_BLKP(lp)) {
+            print_block(lp);
+        }
     }
+    
 }
 
 void  print_implicit_list(void) {
@@ -572,6 +605,7 @@ void  print_implicit_list(void) {
     for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
         print_block(bp);
     }
+    print_block(bp);
 }
 
 void splice_free_block(void * bp) {
@@ -607,7 +641,7 @@ void splice_buddy(void * bp) {
 
     if (HEAD_OF_SEG(head) == bp) { /* bp is the head of this seg list */
         if (NEXT_FREE_BLKP(bp)) {  /* set the next free block as head of seg list */
-            head = NEXT_FREE_BLKP(bp);
+            HEAD_OF_SEG(head) = NEXT_FREE_BLKP(bp);
             PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = NULL;
         } else {                   /* bp is the only block in this seg list so empty it */
             PUT(head, 0);
@@ -617,7 +651,6 @@ void splice_buddy(void * bp) {
     } else {                       /* bp is somewhere in seg list */
       NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
       if (NEXT_FREE_BLKP(bp)) {   /* check if bp is last block in seg list */
-          PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
       }
     }
 }
@@ -628,49 +661,66 @@ void add_buddy(void *bp) {
     head = get_seg_list(GET_SIZE(HDRP(bp)));
 
     if (!GET(head)) { /* this seg list is empty */
-        head = bp;
+        PUTP(head, bp);
         PREV_FREE_BLKP(bp) = NULL;
         NEXT_FREE_BLKP(bp) = NULL;
         return;
     }
     
     /* add buddy to head of appropriate seg list */
-    head_fp = HEAD_OF_SEG(head);
+    head_fp = HEAD_OF_SEG(head); //TODO check this
     NEXT_FREE_BLKP(bp) = head_fp;
     PREV_FREE_BLKP(bp) = NULL;
     PREV_FREE_BLKP(head_fp) = bp;
-    head = bp;
+    HEAD_OF_SEG(head) = bp;
+
     return;
 }
 
 
 
+
+   /*
+    1 2 3 4 5 6  7  8  9  10  11  12  13    14  15 16
+   0|P|1|2|4|8|16|32|64|128|256|512|1024|2048|X|P|E|
+      0 1 2 3 4  5  6  7   8   9   10   11  12
+
+      this version has a 16-byte aligned prologue
+    1 2 3 4  5  6  7   8   9  10   11   12    13   14  15 16 17 18 
+   0|P|4|8|16|32|64|128|256|512|1024|2048|4096|8192|16384|X|P|E|
+      0 1 2  3  4  5   6   7   8    9   10   11    12   13 14
+      P 16 -> 16
+   */
 // couldnt think of a smarter / easier way to do this
 void* get_seg_list(size_t size) {
     switch(size) {
-        case 1:
-            return heap_listp + ( 0* WSIZE);
-        case 2:
-            return heap_listp + ( 1* WSIZE);
         case 4:
-            return heap_listp + ( 2* WSIZE);
+            return heap_listp + ( 0* WSIZE);
         case 8:
-            return heap_listp + ( 3* WSIZE);
+            return heap_listp + ( 1* WSIZE);
         case 16:
-            return heap_listp + ( 4* WSIZE);
-        case 32:                                //really seg list should start here (32 is min size)
-            return heap_listp + ( 5* WSIZE);
+            return heap_listp + ( 2* WSIZE);
+        case 32:
+            return heap_listp + ( 3* WSIZE);
         case 64:
+            return heap_listp + ( 4* WSIZE);
+        case 128:                                //really seg list should start here (32 is min size)
+            return heap_listp + ( 5* WSIZE);
+        case 256:
             return heap_listp + ( 6* WSIZE);
-        case 128:
-            return heap_listp + ( 7* WSIZE);
         case 512:
-            return heap_listp + ( 8* WSIZE);
+            return heap_listp + ( 7* WSIZE);
         case 1024:
-            return heap_listp + ( 9* WSIZE);
+            return heap_listp + ( 8* WSIZE);
         case 2048:
+            return heap_listp + ( 9* WSIZE);
+        case 4096:
             return heap_listp + (10* WSIZE);
+        case 8192:
+            return heap_listp + (11* WSIZE);
+        case 16384:
+            return heap_listp + (12* WSIZE);
         default:
-            return heap_listp + (11* WSIZE);  // stick sizes larger than 2048 here (they'll still be powers of 2)
+            return heap_listp + (13* WSIZE);  // stick sizes larger than 2048 here (they'll still be powers of 2)
     }
 }
