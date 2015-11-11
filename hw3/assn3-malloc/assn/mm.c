@@ -60,21 +60,21 @@
  * provide your team information in the following struct.
  ********************************************************/
 team_t team = {
-    /* Team name */
-    "Farfisa",
-    /* First member's full name */
-    "Tahia Khan",
-    /* First member's email address */
-    "tahia.khan@mail.utoronto.ca",
-    /* Second member's full name (leave blank if none) */
-    "Miro Kuratczyk",
-    /* Second member's email address (leave blank if none) */
-    "miro.kuratczyk@mail.utoronto.ca"
+	/* Team name */
+	"Farfisa",
+	/* First member's full name */
+	"Tahia Khan",
+	/* First member's email address */
+	"tahia.khan@mail.utoronto.ca",
+	/* Second member's full name (leave blank if none) */
+	"Miro Kuratczyk",
+	/* Second member's email address (leave blank if none) */
+	"miro.kuratczyk@mail.utoronto.ca"
 };
 
 /*************************************************************************
  * Constants and Macros
-*************************************************************************/
+ *************************************************************************/
 #define WSIZE       sizeof(void *)          /* word size (bytes) */
 #define DSIZE       (2 * WSIZE)				/* doubleword size (bytes) */
 #define CHUNKSIZE   (1<<7)					/* initial heap size (bytes) */
@@ -137,28 +137,28 @@ void * power_coalesce(void *bp);
  * structure:
  * [0|PR HDR|PR FTR|EPI]
  **********************************************************/
- int mm_init(void)
- {
+int mm_init(void)
+{
 	int i;
 	if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
-         return -1;
-     PUT(heap_listp, 0);                              // alignment padding
-     PUT(heap_listp + (1 * WSIZE), PACK(DSIZE, 1));   // prologue header
-     PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1));   // prologue footer
-     PUT(heap_listp + (3 * WSIZE), PACK(0, 1));       // epilogue header
+		return -1;
+	PUT(heap_listp, 0);                              // alignment padding
+	PUT(heap_listp + (1 * WSIZE), PACK(DSIZE, 1));   // prologue header
+	PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1));   // prologue footer
+	PUT(heap_listp + (3 * WSIZE), PACK(0, 1));       // epilogue header
 	heap_listp+=DSIZE;
 
-   /* Initialize list of segregated list pointers */
-   for (i = 0; i < NUM_SEG_LISTS; i++) {
+	/* Initialize list of segregated list pointers */
+	for (i = 0; i < NUM_SEG_LISTS; i++) {
 		buddyp[i]=NULL;
 	}
 
 	/* Initialize free list to point at the prologue */
-   //mm_check_init();
+	//mm_check_init();
 
-   return 0;
-   
- }
+	return 0;
+
+}
 
 /**********************************************************
  * coalesce_buddy
@@ -210,6 +210,11 @@ void *coalesce_buddy(void *bp) // I think we need to remove coalesced buddy from
 	return bp;
 }
 
+/**********************************************************
+ * power_coalesce
+ * Continue coalescing until largest free block is formed
+ * Return pointer to new superblock
+ **********************************************************/
 void *power_coalesce(void *bp) {
 	size_t size = GET_SIZE(HDRP(bp));
 	void* newp = coalesce_buddy(bp);
@@ -223,7 +228,7 @@ void *power_coalesce(void *bp) {
 		i++;
 	}
 	add_buddy(newp);
-	
+
 	return newp;
 } 
 
@@ -235,24 +240,24 @@ void *power_coalesce(void *bp) {
  **********************************************************/
 void *extend_heap(size_t words)
 {
-    char *bp;
-    size_t size;
+	char *bp;
+	size_t size;
 
-    /* Allocate an even number of words to maintain alignments */
-    size = (words % 2) ? (words+1) * WSIZE : words * WSIZE;
+	/* Allocate an even number of words to maintain alignments */
+	size = (words % 2) ? (words+1) * WSIZE : words * WSIZE;
 
 	//printf("extend_heap: Extending heap by %d\n",size);
-    if ( (bp = mem_sbrk(size)) == (void *)-1 ){
+	if ( (bp = mem_sbrk(size)) == (void *)-1 ){
 		mm_check();
-        return NULL;
+		return NULL;
 	}
 
-    /* Initialize free block header/footer and the epilogue header */
-    PUT(HDRP(bp), PACK(size, 0));                // free block header
-    PUT(FTRP(bp), PACK(size, 0));                // free block footer
-    PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));        // new epilogue header
-	
-    return power_coalesce(bp);
+	/* Initialize free block header/footer and the epilogue header */
+	PUT(HDRP(bp), PACK(size, 0));                // free block header
+	PUT(FTRP(bp), PACK(size, 0));                // free block footer
+	PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));        // new epilogue header
+
+	return power_coalesce(bp);
 }
 
 /**********************************************************
@@ -267,14 +272,14 @@ void * split_buddy(void* bp, size_t size) {
 	/* remember find_fit_buddy has already spliced block */
 	void *np;
 	int bpsize = GET_SIZE(HDRP(bp));	
-	
+
 	if (bpsize-size<=32) {
 		return bp;	
 	}
 
 	PUT(HDRP(bp), PACK(size,1));
 	PUT(FTRP(bp), PACK(size,1));
-	
+
 	np=NEXT_BLKP(bp);
 
 	PUT(HDRP(np), PACK(bpsize-size,0));
@@ -294,31 +299,31 @@ void * split_buddy(void* bp, size_t size) {
  **********************************************************/
 void * find_fit_buddy(size_t asize,size_t targsize, int isparent)
 {
-    void *bp;
-    int index = get_buddy_index(targsize);
+	void *bp;
+	int index = get_buddy_index(targsize);
 	size_t bestfit;
 	void *np;
 	size_t npfit;
 
 	/* check if we are traversing the last list - last set of free blocks */
-    if (index==13 &&(buddyp[index]==NULL || GET_SIZE(HDRP(buddyp[13])) < asize) ){ /* no suitable free blocks in any seg list -> should extend heap */
+	if (index==13 &&(buddyp[index]==NULL || GET_SIZE(HDRP(buddyp[13])) < asize) ){ /* no suitable free blocks in any seg list -> should extend heap */
 		bp=buddyp[13];
 		while (bp!=NULL) {
 			bestfit = GET_SIZE(HDRP(bp));
 			if (bestfit>=asize) {
 				np = NEXT_FREE_BLKP(bp);
-				
+
 				splice_buddy(bp);
 				return bp;
-			
+
 			}
 			bp=NEXT_FREE_BLKP(bp);
 		}
-        return NULL; /* no suitable free block found */
-    }
-    if (buddyp[index]==NULL) /* no free blocks in this seg list -> try next size */
-        bp = find_fit_buddy(asize,next_power_of_two(targsize+1),0); /* recurse */
-    else { 
+		return NULL; /* no suitable free block found */
+	}
+	if (buddyp[index]==NULL) /* no free blocks in this seg list -> try next size */
+		bp = find_fit_buddy(asize,next_power_of_two(targsize+1),0); /* recurse */
+	else { 
 		bp=buddyp[index];
 		while(bp!=NULL) { /* check buddyp[0] and buddyp[1] for a fit, otherwise try next list */
 
@@ -341,12 +346,12 @@ void * find_fit_buddy(size_t asize,size_t targsize, int isparent)
 			break;
 		}
 		bp = find_fit_buddy(asize,next_power_of_two(targsize+1),0); /* recurse */
-    }
+	}
 	if (bp != NULL && GET_SIZE(HDRP(bp)) != asize){/* should split into buddies if we found a block of larger size - use &&isparent for lazy splitting*/
-        split_buddy(bp, asize); 
-    }
+		split_buddy(bp, asize); 
+	}
 
-    return bp;
+	return bp;
 }
 
 /**********************************************************
@@ -355,11 +360,11 @@ void * find_fit_buddy(size_t asize,size_t targsize, int isparent)
  **********************************************************/
 void place(void* bp, size_t asize)
 {
-  /* Get the current block size */
-  size_t bsize = GET_SIZE(HDRP(bp));
+	/* Get the current block size */
+	size_t bsize = GET_SIZE(HDRP(bp));
 
-  PUT(HDRP(bp), PACK(bsize, 1));
-  PUT(FTRP(bp), PACK(bsize, 1));
+	PUT(HDRP(bp), PACK(bsize, 1));
+	PUT(FTRP(bp), PACK(bsize, 1));
 }
 
 /**********************************************************
@@ -368,15 +373,15 @@ void place(void* bp, size_t asize)
  **********************************************************/
 void mm_free(void *bp)
 {
-    if(bp == NULL){
-      return;
-    }
-    if (!GET_ALLOC(HDRP(bp))) {
-        return;
-    }
-    size_t size = GET_SIZE(HDRP(bp));
-    PUT(HDRP(bp), PACK(size,0));
-    PUT(FTRP(bp), PACK(size,0));
+	if(bp == NULL){
+		return;
+	}
+	if (!GET_ALLOC(HDRP(bp))) {
+		return;
+	}
+	size_t size = GET_SIZE(HDRP(bp));
+	PUT(HDRP(bp), PACK(size,0));
+	PUT(FTRP(bp), PACK(size,0));
 	power_coalesce(bp);
 }
 
@@ -389,38 +394,38 @@ void mm_free(void *bp)
  **********************************************************/
 void *mm_malloc(size_t size)
 {
-    size_t asize; /* adjusted block size */
-    size_t extendsize; /* amount to extend heap if no fit */
-    char * bp;
+	size_t asize; /* adjusted block size */
+	size_t extendsize; /* amount to extend heap if no fit */
+	char * bp;
 
-    /* Ignore spurious requests */
-    if (size == 0)
-        return NULL;
+	/* Ignore spurious requests */
+	if (size == 0)
+		return NULL;
 
-    /* Adjust block size to include overhead and alignment reqs. */
-    if (size <= DSIZE) 
-        asize = 2 * DSIZE;
-    else {
-        asize  = DSIZE * ((size + (DSIZE) + (DSIZE-1))/ DSIZE);
-    }
+	/* Adjust block size to include overhead and alignment reqs. */
+	if (size <= DSIZE) 
+		asize = 2 * DSIZE;
+	else {
+		asize  = DSIZE * ((size + (DSIZE) + (DSIZE-1))/ DSIZE);
+	}
 
-    /* Search the free list for a fit */
-    if ((bp = find_fit_buddy(asize,prev_power_of_two(asize),1)) != NULL) {
-        place(bp, asize);
-        return bp;
-    }
+	/* Search the free list for a fit */
+	if ((bp = find_fit_buddy(asize,prev_power_of_two(asize),1)) != NULL) {
+		place(bp, asize);
+		return bp;
+	}
 
-    /* No fit found. Get more memory and place the block */
-    extendsize = MAX(asize, CHUNKSIZE);
-    if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
-        return NULL;
+	/* No fit found. Get more memory and place the block */
+	extendsize = MAX(asize, CHUNKSIZE);
+	if ((bp = extend_heap(extendsize/WSIZE)) == NULL)
+		return NULL;
 
 	/* Remove new block of memory from seglist */
-    splice_buddy(bp);
+	splice_buddy(bp);
 	/* Mark new block as allocated */
-    place(bp, asize);
+	place(bp, asize);
 
-    return bp;
+	return bp;
 
 }
 
@@ -461,7 +466,7 @@ void *mm_realloc(void *ptr, size_t size)
 	size_t size_n = GET_SIZE(HDRP(NEXT_BLKP(ptr)));
 	size_t newsize;
 
-    /* see if we can grab an adjacent free block and save time/memory */
+	/* see if we can grab an adjacent free block and save time/memory */
 	if (prev_alloc && !next_alloc){ /* Case 2 aff*/ // should check all use most efficient
 		newsize = size_c+size_n;
 
@@ -579,36 +584,36 @@ void add_buddy(void *bp) {
  * Return index of approriate seglist
  *********************************************************/
 int get_buddy_index(size_t size) {
-    switch(size) {
-        case 4:
-            return 0;
-        case 8:
-            return 1;
-        case 16:
-            return 2;
-        case 32:
-            return 3;
-        case 64:
-            return 4;
-        case 128:                                
-            return 5;
-        case 256:
-            return 6;
-        case 512:
-            return 7;
-        case 1024:
-            return 8;
-        case 2048:
-            return 9;
-        case 4096:
-            return 10;
-        case 8192:
-            return 11;
-        case 16384:
-            return 12;
-        default:
-            return 13; /* for sizes >= 32768 */
-    }
+	switch(size) {
+		case 4:
+			return 0;
+		case 8:
+			return 1;
+		case 16:
+			return 2;
+		case 32:
+			return 3;
+		case 64:
+			return 4;
+		case 128:                                
+			return 5;
+		case 256:
+			return 6;
+		case 512:
+			return 7;
+		case 1024:
+			return 8;
+		case 2048:
+			return 9;
+		case 4096:
+			return 10;
+		case 8192:
+			return 11;
+		case 16384:
+			return 12;
+		default:
+			return 13; /* for sizes >= 32768 */
+	}
 }
 
 /**********************************************************
@@ -638,7 +643,7 @@ int buddy_exists(void *bp) {
  * Return nonzero if the block is in valid address range.
  *********************************************************/
 int in_heap(void *bp) {
-	
+
 	if (bp > mem_heap_hi() || bp < mem_heap_lo()) {
 		printf("ERROR in_heap: address %p not within heap limits of mem_heap_lo=%p and mem_heap_hi=%p\n",bp,mem_heap_lo(),mem_heap_hi());
 		return 0;
@@ -654,30 +659,30 @@ int in_heap(void *bp) {
  * Return nonzero if init valid
  *********************************************************/
 int mm_check_init(void) {
-    void * bp;
+	void * bp;
 	int i;
-    int success = 1;
+	int success = 1;
 
-    /* validate prologue */
-    if (GET_SIZE(HDRP(heap_listp)) != DSIZE || !GET_ALLOC(HDRP(heap_listp)) && HDRP(heap_listp) != FTRP(heap_listp)) {
-        printf("ERROR mm_check_init: prologue invalid %d expected %d\n",GET_SIZE(HDRP(heap_listp)),DSIZE);
-        success = 0;
-    }
-	
+	/* validate prologue */
+	if (GET_SIZE(HDRP(heap_listp)) != DSIZE || !GET_ALLOC(HDRP(heap_listp)) && HDRP(heap_listp) != FTRP(heap_listp)) {
+		printf("ERROR mm_check_init: prologue invalid %d expected %d\n",GET_SIZE(HDRP(heap_listp)),DSIZE);
+		success = 0;
+	}
+
 	for (i=0; i < NUM_SEG_LISTS; i++) {
-        if (buddyp[i]!=NULL){
-            printf("ERROR mm_check_init: all seg lists should be empty initially buddyp[%i]=%p\n",i,buddyp[i]);
-            success = 0;
-        }
-    }
+		if (buddyp[i]!=NULL){
+			printf("ERROR mm_check_init: all seg lists should be empty initially buddyp[%i]=%p\n",i,buddyp[i]);
+			success = 0;
+		}
+	}
 
-    /* validate epilogue */
-    bp = mem_heap_lo();
-    if (!GET_ALLOC(bp) && GET_SIZE(bp)) {
-        printf("ERROR mm_check_init: epilogue invalid\n"); 
-        success = 0;
-    }
-    return success;
+	/* validate epilogue */
+	bp = mem_heap_lo();
+	if (!GET_ALLOC(bp) && GET_SIZE(bp)) {
+		printf("ERROR mm_check_init: epilogue invalid\n"); 
+		success = 0;
+	}
+	return success;
 }
 
 /**********************************************************
@@ -686,21 +691,21 @@ int mm_check_init(void) {
  * Return nonzero if the heap is consistant.
  *********************************************************/
 int mm_check(void){
-    void * bp;
-    void * pp;
-    void * np;
+	void * bp;
+	void * pp;
+	void * np;
 
-    size_t size;
+	size_t size;
 	int i;
-    int success = 1;
+	int success = 1;
 
 	bp = heap_listp;
 
 	/*   first check each block manually			  */
-    /*   are free blocks in free list?				  */
+	/*   are free blocks in free list?				  */
 	/*   is end of last block flush with end of heap? */
 
-    /*
+	/*
 	 *   don't have to worry about non-coalesced 
 	 *   adjacent blocks as we allow this is part of
 	 *   our design (non-aggressive merging), but
@@ -712,7 +717,7 @@ int mm_check(void){
 	while (bp!=NULL) {
 
 		if (GET_SIZE(HDRP(bp))==0) { /* reached end of blocks, unless serious error has occured */
-		
+
 			if (bp-1!=mem_heap_hi()) { /* fatal error, have a block of size 0 in heap */
 				printf("ERROR mm_check: reached block[%i].size 0 at bp.addr=%p but mem_heap_hi=%p\n",i,bp,mem_heap_hi());
 				success=0;
@@ -730,23 +735,23 @@ int mm_check(void){
 		}
 		bp=NEXT_BLKP(bp);
 		i++;
-		
+
 	}
 
-    /* now check the free list								   */ 
-    /* is every block in the free list marked as free?		   */
-    /* does every pointer point to an address within the heap? */
+	/* now check the free list								   */ 
+	/* is every block in the free list marked as free?		   */
+	/* does every pointer point to an address within the heap? */
 	/* every head's previous pointer should be null            */
 	/* checker already checks for overlapping addresses        */
-    
+
 	int fox=0;
 
 	for (i=0; i<NUM_SEG_LISTS;i++) {
 
 		bp = buddyp[i];
-	
+
 		if ((void**)bp!=0x0 && PREV_FREE_BLKP(bp)!=NULL) { /* make sure we do not deref a null pointer */
-				printf("ERROR mm_check: head of list buddyp[%i].prev=%p has non-NULL previous pointer\n",i,PREV_FREE_BLKP(bp));	
+			printf("ERROR mm_check: head of list buddyp[%i].prev=%p has non-NULL previous pointer\n",i,PREV_FREE_BLKP(bp));	
 			success=0;
 		}
 
@@ -754,12 +759,12 @@ int mm_check(void){
 			if (GET_ALLOC(HDRP(bp))==1) { /* found an alloc'd block in free list */
 				fox=1;			
 			}
-			
+
 			if (PREV_FREE_BLKP(bp) && !in_heap(PREV_FREE_BLKP(bp))) {
-					printf("ERROR mem_check: buddyp[%i].addr=%p has a prev pointer outside the heap\n");
+				printf("ERROR mem_check: buddyp[%i].addr=%p has a prev pointer outside the heap\n");
 			}
 			if (NEXT_FREE_BLKP(bp) && !in_heap(NEXT_FREE_BLKP(bp))) {
-					printf("ERROR mem_check: buddyp[%i].addr=%p has a next pointer outside the heap\n");
+				printf("ERROR mem_check: buddyp[%i].addr=%p has a next pointer outside the heap\n");
 			}
 
 			bp=NEXT_FREE_BLKP(bp);
@@ -771,7 +776,7 @@ int mm_check(void){
 
 	}
 
-    return success;
+	return success;
 }
 
 /**********************************************************
@@ -779,14 +784,14 @@ int mm_check(void){
  * Return next power of two from v.
  *********************************************************/
 size_t next_power_of_two(size_t v) {
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v |= v >> 16;
-    v++;
-    return v;
+	v--;
+	v |= v >> 1;
+	v |= v >> 2;
+	v |= v >> 4;
+	v |= v >> 8;
+	v |= v >> 16;
+	v++;
+	return v;
 }
 
 /**********************************************************
@@ -794,10 +799,10 @@ size_t next_power_of_two(size_t v) {
  * Return previous power of two from v.
  *********************************************************/
 size_t prev_power_of_two(size_t v) {
-    v |= v | (v >> 1);
-    v |= v | (v >> 2);
-    v |= v | (v >> 4);
-    v |= v | (v >> 8);
-    v |= v | (v >> 16);
-    return v-(v>>1);
+	v |= v | (v >> 1);
+	v |= v | (v >> 2);
+	v |= v | (v >> 4);
+	v |= v | (v >> 8);
+	v |= v | (v >> 16);
+	return v-(v>>1);
 }
