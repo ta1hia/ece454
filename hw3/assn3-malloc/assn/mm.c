@@ -117,10 +117,9 @@ void   print_free_list(void);
 void   print_implicit_list(void);
 
 void*  heap_listp = NULL;
-void*  free_listp = NULL;
+void*  buddyp[NUM_SEG_LISTS]; /* list of pointers to head of each segregated list of sizes by ranges of 2^k->2^k-1 */
 
 /* buddy functions added for our implementation */
-void*  buddyp[NUM_SEG_LISTS]; /* list of pointers to head of each segregated list of sizes by ranges of 2^k->2^k-1 */
 void   splice_free_block(void * bp);
 void   splice_buddy(void * bp);
 void * find_fit_buddy(size_t asize, size_t targsize, int isparent);
@@ -155,8 +154,6 @@ void * power_coalesce(void *bp);
 	}
 
 	/* Initialize free list to point at the prologue */
-   free_listp = heap_listp; 
-
    //mm_check_init();
 
    return 0;
