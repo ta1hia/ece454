@@ -101,6 +101,7 @@ void* process (void* id) {
 int  
 main (int argc, char* argv[]){
     int i;
+    int args[4];
 
     // Print out team information
     printf( "Team Name: %s\n", team.team );
@@ -131,7 +132,8 @@ main (int argc, char* argv[]){
 
     pthread_t* thrd = (pthread_t *) malloc(sizeof(pthread_t)*num_threads);
     for (i = 0; i < num_threads; i++) {
-        pthread_create(&thrd[i], NULL, process, (void*) &i);
+        args[i] = i;
+        pthread_create(&thrd[i], NULL, process, (void*) &args[i]);
     }
 
     for (i = 0; i < num_threads; i++) {

@@ -29,10 +29,8 @@ team_t team = {
 unsigned num_threads;
 unsigned samples_to_skip;
 
-// Global mutex
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
 class sample;
+
 
 class sample {
   unsigned my_key;
@@ -49,7 +47,7 @@ class sample {
 // it is a C++ template, which means we define the types for
 // the element and key value here: element is "class sample" and
 // key value is "unsigned".  
-hash<sample,unsigned> h;
+hash<sample,unsigned> local_h[4];
 
 void* process (void* id) {
     int i,j,k;
@@ -77,31 +75,29 @@ void* process (void* id) {
             key = rnum % RAND_NUM_UPPER_BOUND;
 
             // critical section start
-            pthread_mutex_lock(&mutex);
 
             // if this sample has not been counted before
-            if (!(s = h.lookup(key))){
+            if (!(s = local_h[slice].lookup(key))){
 
                 // insert a new element for it into the hash table
                 s = new sample(key);
-                h.insert(s);
+                local_h[slice].insert(s);
             }
 
             // increment the count for the sample
             s->count++;
 
             // critical section end
-            pthread_mutex_unlock(&mutex);
         }
     }
-
 }
 
 
 int  
 main (int argc, char* argv[]){
-    int i;
-    int args[4];
+    int i, j;
+    int arg[4];
+    sample *s, *s0;
 
     // Print out team information
     printf( "Team Name: %s\n", team.team );
@@ -124,22 +120,38 @@ main (int argc, char* argv[]){
     sscanf(argv[2], " %d", &samples_to_skip);
 
     // initialize a 16K-entry (2**14) hash of empty lists
-    h.setup(14);
-
-    pthread_mutex_init(&mutex, NULL);
-    pthread_t* thrd = (pthread_t *) malloc(sizeof(pthread_t)*num_threads);
     for (i = 0; i < num_threads; i++) {
-        args[i] = i;
-        pthread_create(&thrd[i], NULL, process, (void*) &args[i]);
+        local_h[i].setup(14);
+    }
+
+    pthread_t* thrd = (pthread_t *) malloc(sizeof(pthread_t)*num_threads);
+
+    for (i = 0; i < num_threads; i++) {
+        arg[i] = i;
+        pthread_create(&thrd[i], NULL, process, (void*) &arg[i]);
     }
 
     for (i = 0; i < num_threads; i++) {
         pthread_join(thrd[i], NULL);
     }
 
+    // combine counts from multiple hash tables into 1
+    for (i = 1; i < num_threads; i++) {
+        for (j = 0; j < RAND_NUM_UPPER_BOUND; j++) {
+            s0 = local_h[0].lookup(j);
+            s = local_h[i].lookup(j);
+            if (!s0 && s) {
+                s0 = new sample(j);
+                s0->count = s->count;
+                local_h[0].insert(s0);
+            } else if (s0 && s) {
+                s0->count += s->count;
+            }
+        }
+    }
+
     // print a list of the frequency of all samples
-    h.print();
-    pthread_mutex_destroy(&mutex);
+    local_h[0].print();
     free(thrd);
 
 }
