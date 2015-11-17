@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+#define RANDTRACK_LIST_LOCK
 #include "defs.h"
 #include "hash.h"
 
@@ -29,9 +30,6 @@ team_t team = {
 unsigned num_threads;
 unsigned samples_to_skip;
 
-// Global mutex
-pthread_mutex_t mutex[RAND_NUM_UPPER_BOUND];
-
 class sample;
 
 class sample {
@@ -54,7 +52,7 @@ hash<sample,unsigned> h;
 void* process (void* id) {
   int i,j,k;
   int rnum;
-  unsigned key, hash;
+  unsigned key;
   sample *s;
 
     int slice = *((int*) id);
@@ -75,10 +73,9 @@ void* process (void* id) {
 
             // force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
             key = rnum % RAND_NUM_UPPER_BOUND;
-            hash = h.gethash(key);
 
             // critical section start
-            pthread_mutex_lock(&mutex[hash]);
+            h.lock_list(key);
 
             // if this sample has not been counted before
             if (!(s = h.lookup(key))){
@@ -92,7 +89,7 @@ void* process (void* id) {
             s->count++;
 
             // critical section end
-            pthread_mutex_unlock(&mutex[hash]);
+            h.unlock_list(key);
         }
     }
 
@@ -127,10 +124,6 @@ main (int argc, char* argv[]){
     // initialize a 16K-entry (2**14) hash of empty lists
     h.setup(14);
 
-    for (i = 0; i < RAND_NUM_UPPER_BOUND; i++) {
-        pthread_mutex_init(&mutex[i], NULL);
-    }
-
     pthread_t* thrd = (pthread_t *) malloc(sizeof(pthread_t)*num_threads);
     for (i = 0; i < num_threads; i++) {
         args[i] = i;
@@ -143,8 +136,5 @@ main (int argc, char* argv[]){
 
     // print a list of the frequency of all samples
     h.print();
-    for (i = 0; i < RAND_NUM_UPPER_BOUND; i++) {
-        pthread_mutex_destroy(&mutex[i]);
-    }
     free(thrd);
 }
