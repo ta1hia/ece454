@@ -54,7 +54,7 @@ hash<sample,unsigned> h;
 void* process (void* id) {
   int i,j,k;
   int rnum;
-  unsigned key;
+  unsigned key, hash;
   sample *s;
 
     int slice = *((int*) id);
@@ -75,9 +75,10 @@ void* process (void* id) {
 
             // force the sample to be within the range of 0..RAND_NUM_UPPER_BOUND-1
             key = rnum % RAND_NUM_UPPER_BOUND;
+            hash = h.gethash(key);
 
             // critical section start
-            pthread_mutex_lock(&mutex[key]);
+            pthread_mutex_lock(&mutex[hash]);
 
             // if this sample has not been counted before
             if (!(s = h.lookup(key))){
@@ -91,7 +92,7 @@ void* process (void* id) {
             s->count++;
 
             // critical section end
-            pthread_mutex_unlock(&mutex[key]);
+            pthread_mutex_unlock(&mutex[hash]);
         }
     }
 
@@ -146,5 +147,4 @@ main (int argc, char* argv[]){
         pthread_mutex_destroy(&mutex[i]);
     }
     free(thrd);
-
 }

@@ -23,6 +23,7 @@ template<class Ele, class Keytype> class hash {
   Ele *lookup(Keytype the_key);
   void print(FILE *f=stdout);
   void reset();
+  unsigned gethash(Keytype the_key);
   void cleanup();
 };
 
@@ -53,6 +54,12 @@ hash<Ele,Keytype>::lookup(Keytype the_key){
   l = &entries[HASH_INDEX(the_key,my_size_mask)];
   return l->lookup(the_key);
 }  
+
+template<class Ele, class Keytype> 
+unsigned 
+hash<Ele,Keytype>::gethash(Keytype the_key){
+    return HASH_INDEX(the_key,my_size_mask);
+}
 
 template<class Ele, class Keytype> 
 void 
