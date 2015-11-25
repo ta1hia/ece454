@@ -12,7 +12,7 @@
  * Helper function definitions
  ****************************************************************************/
 
-#define NUM_THREADS 4
+#define NUM_THREADS 8
 /**
  * Swapping the two boards only involves swapping pointers, not
  * copying values.
@@ -97,7 +97,6 @@ threaded_game_of_life (void* vargp)
 
             }
         }
-        //INSERT BARRIER
         barrier();
         SWAP_BOARDS( outboard, inboard );
 
@@ -108,7 +107,6 @@ threaded_game_of_life (void* vargp)
      * Just be careful when you free() the two boards, so that you don't
      * free the same one twice!!! 
      */
-    //return inboard;
     
     pthread_exit(NULL);
 
@@ -122,10 +120,11 @@ threaded_game_of_life_driver (char* outboard,
 	      const int gens_max)
 {
     int i;
-    t_args args[4];
-    pthread_t* thrd[4];
+    t_args *args = malloc(sizeof(t_args)*NUM_THREADS);
+    pthread_t* thrd = malloc(sizeof(pthread_t)*NUM_THREADS);
 
     pthread_mutex_init(&mutex, NULL);
+
 
     for (i = 0; i < NUM_THREADS; i++) {
         args[i].inboard = inboard;
@@ -134,11 +133,11 @@ threaded_game_of_life_driver (char* outboard,
         args[i].ncols = ncols;
         args[i].gens_max = gens_max;
         args[i].quadrant = i;
-        pthread_create(thrd[i], NULL, threaded_game_of_life, (void*) &args[i]);
+        pthread_create(&thrd[i], NULL, threaded_game_of_life, (void*) &args[i]);
     }
 
     for (i = 0; i < NUM_THREADS; i++) {
-        pthread_join(*thrd[i], NULL);
+        pthread_join(thrd[i], NULL);
     }
 
     return inboard;
