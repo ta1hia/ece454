@@ -84,17 +84,16 @@ threaded_game_of_life (void* vargp)
                 const int jeast = mod (j+1, ncols);
 
                 const char neighbor_count = 
-                    BOARD (inboard, inorth, jwest) + 
-                    BOARD (inboard, inorth, j) + 
-                    BOARD (inboard, inorth, jeast) + 
-                    BOARD (inboard, i, jwest) +
-                    BOARD (inboard, i, jeast) + 
-                    BOARD (inboard, isouth, jwest) +
-                    BOARD (inboard, isouth, j) + 
-                    BOARD (inboard, isouth, jeast);
+                    board (inboard, inorth, jwest) + 
+                    board (inboard, inorth, j) + 
+                    board (inboard, inorth, jeast) + 
+                    board (inboard, i, jwest) +
+                    board (inboard, i, jeast) + 
+                    board (inboard, isouth, jwest) +
+                    board (inboard, isouth, j) + 
+                    board (inboard, isouth, jeast);
 
                 BOARD(outboard, i, j) = alivep (neighbor_count, BOARD (inboard, i, j));
-
             }
         }
         barrier();
@@ -110,6 +109,58 @@ threaded_game_of_life (void* vargp)
     
     pthread_exit(NULL);
 
+}
+
+void 
+process_cell(char* outboard,
+	      char* inboard,
+	      const int nrows,
+	      const int ncols)
+{
+    char cell = BOARD(inboard,i,j);
+
+    //if cell is dead
+    //should this cell be alive
+    if (!IS_ALIVE(cell) && TO_SPAWN(cell)) {
+        //set alive
+        SET_ALIVE(cell);
+
+        //increment all neighbours
+        const int inorth = mod (i-1, nrows);
+        const int isouth = mod (i+1, nrows);
+        const int jwest = mod (j-1, ncols);
+        const int jeast = mod (j+1, ncols);
+        INCREMENT (outboard, inorth, jwest);
+        INCREMENT (outboard, inorth, j);
+        INCREMENT (outboard, inorth, jeast);
+        INCREMENT (outboard, i, jwest);
+        INCREMENT (outboard, i, jeast);
+        INCREMENT (outboard, isouth, jwest);
+        INCREMENT (outboard, isouth, j);
+        INCREMENT (outboard, isouth, jeast);
+    }
+
+
+    //if cell is alive
+    //if the cell should die
+    else if (TO_DIE(cell)) { 
+        //set cell to be dead
+        SET_DEAD(cell);
+
+        //decrement all neighbours
+        const int inorth = mod (i-1, nrows);
+        const int isouth = mod (i+1, nrows);
+        const int jwest = mod (j-1, ncols);
+        const int jeast = mod (j+1, ncols);
+        DECREMENT (outboard, inorth, jwest);
+        DECREMENT (outboard, inorth, j);
+        DECREMENT (outboard, inorth, jeast);
+        DECREMENT (outboard, i, jwest);
+        DECREMENT (outboard, i, jeast);
+        DECREMENT (outboard, isouth, jwest);
+        DECREMENT (outboard, isouth, j);
+        DECREMENT (outboard, isouth, jeast);
+    }
 }
 
 char*
@@ -154,5 +205,8 @@ game_of_life (char* outboard,
 	      const int ncols,
 	      const int gens_max)
 {
-  return threaded_game_of_life_driver (outboard, inboard, nrows, ncols, gens_max);
+    if (nrows < 32)
+        return sequential_game_of_life(outboard, inboard, nrows, ncols, gens_max);
+    else
+        return threaded_game_of_life_driver (outboard, inboard, nrows, ncols, gens_max);
 }
