@@ -65,7 +65,6 @@ threaded_game_of_life (void* vargp)
     int rows = nrows/NUM_THREADS;
     char* inboard = targs->inboard;
     char*outboard = targs->outboard;
-    const int LDA = nrows;
 
     int start = rows * targs->quadrant;
     int gens_max = targs->gens_max;
@@ -84,16 +83,17 @@ threaded_game_of_life (void* vargp)
                 const int jeast = mod (j+1, ncols);
 
                 const char neighbor_count = 
-                    board (inboard, inorth, jwest) + 
-                    board (inboard, inorth, j) + 
-                    board (inboard, inorth, jeast) + 
-                    board (inboard, i, jwest) +
-                    board (inboard, i, jeast) + 
-                    board (inboard, isouth, jwest) +
-                    board (inboard, isouth, j) + 
-                    board (inboard, isouth, jeast);
+                    BOARD (inboard, inorth, jwest) + 
+                    BOARD (inboard, inorth, j) + 
+                    BOARD (inboard, inorth, jeast) + 
+                    BOARD (inboard, i, jwest) +
+                    BOARD (inboard, i, jeast) + 
+                    BOARD (inboard, isouth, jwest) +
+                    BOARD (inboard, isouth, j) + 
+                    BOARD (inboard, isouth, jeast);
 
                 BOARD(outboard, i, j) = alivep (neighbor_count, BOARD (inboard, i, j));
+                //process_cell(outboard, inboard, nrows, ncols, i, j);
             }
         }
         barrier();
@@ -115,8 +115,11 @@ void
 process_cell(char* outboard,
 	      char* inboard,
 	      const int nrows,
-	      const int ncols)
+	      const int ncols,
+          int i,
+          int j)
 {
+    const int LDA = nrows;
     char cell = BOARD(inboard,i,j);
 
     //if cell is dead
@@ -143,7 +146,7 @@ process_cell(char* outboard,
 
     //if cell is alive
     //if the cell should die
-    else if (TO_DIE(cell)) { 
+    else if (cell <= (char) 0x11 || cell > (char) 0x13) { 
         //set cell to be dead
         SET_DEAD(cell);
 
@@ -175,7 +178,6 @@ threaded_game_of_life_driver (char* outboard,
     pthread_t* thrd = malloc(sizeof(pthread_t)*NUM_THREADS);
 
     pthread_mutex_init(&mutex, NULL);
-
 
     for (i = 0; i < NUM_THREADS; i++) {
         args[i].inboard = inboard;

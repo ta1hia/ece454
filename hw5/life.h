@@ -26,5 +26,12 @@ sequential_game_of_life (char* outboard,
 			 const int ncols,
 			 const int gens_max);
 
+void 
+process_cell(char* outboard,
+	      char* inboard,
+	      const int nrows,
+	      const int ncols,
+          int i,
+          int j);
 
 #endif /* _life_h */

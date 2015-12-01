@@ -33,10 +33,11 @@ alivep (char count, char state)
  * 00110    dead and 3 neighbours
  */
 
+#define BOARD( __board, __i, __j )  (__board[(__i) + LDA*(__j)])
 #define SET_ALIVE(c) (c |=  (1 << (4)))
 #define SET_DEAD(c) (c &= ~(1 << (4)))
 #define IS_ALIVE(c) ((c >> 4) & 1)
-#define TO_DIE (c) (c <= (char) 0x11 || c > (char) 0x13)
+//#define TO_DIE (c) (c <= (char) 0x11 || c > (char) 0x13)
 #define TO_SPAWN(c) (c == (char)0x3)
 
 #define INCREMENT(__board, __i, __j) (BOARD(__board, __i, __j) += 1)
