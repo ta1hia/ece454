@@ -4,6 +4,7 @@
  ****************************************************************************/
 #include "life.h"
 #include "util.h"
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -34,25 +35,7 @@ typedef struct t_args {
     int quadrant;
 } t_args;
 
-pthread_cond_t  cond= PTHREAD_COND_INITIALIZER;
-pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
-int arrived = 0;
-
-void
-barrier()
-{
-    pthread_mutex_lock(&mutex);
-    arrived++;
-    if (arrived < NUM_THREADS)
-        pthread_cond_wait(&cond, &mutex);
-    else {
-        pthread_cond_broadcast(&cond);
-        arrived = 0;
-    }
-    pthread_mutex_unlock(&mutex);
-    
-}
-
+pthread_barrier_t   barrier; // barrier synchronization object
 
 
 void*
@@ -97,7 +80,7 @@ threaded_game_of_life (void* vargp)
 
             }
         }
-        barrier();
+        pthread_barrier_wait (&barrier);
         SWAP_BOARDS( outboard, inboard );
 
     }
@@ -123,7 +106,7 @@ threaded_game_of_life_driver (char* outboard,
     t_args *args = malloc(sizeof(t_args)*NUM_THREADS);
     pthread_t* thrd = malloc(sizeof(pthread_t)*NUM_THREADS);
 
-    pthread_mutex_init(&mutex, NULL);
+    pthread_barrier_init (&barrier, NULL, NUM_THREADS);
 
 
     for (i = 0; i < NUM_THREADS; i++) {
@@ -144,6 +127,64 @@ threaded_game_of_life_driver (char* outboard,
 
 }
 
+char*
+openmp_game_of_life (char* outboard, 
+        char* inboard,
+        const int nrows,
+        const int ncols,
+        const int gens_max)
+{
+    /* HINT: in the parallel decomposition, LDA may not be equal to
+       nrows! */
+    const int LDA = nrows;
+    int curgen;
+
+    for (curgen = 0; curgen < gens_max; curgen++)
+    {
+        /* HINT: you'll be parallelizing these loop(s) by doing a
+           geometric decomposition of the output */
+        
+        #pragma omp parallel num_threads(NUM_THREADS)
+        {
+            int tid = omp_get_thread_num();
+            int i, j;
+
+            for (i = tid*nrows/NUM_THREADS ; i < (tid+1)*nrows/NUM_THREADS; i++)
+            {
+                for (j = 0; j < ncols; j++)
+                {
+                    const int inorth = mod (i-1, nrows);
+                    const int isouth = mod (i+1, nrows);
+                    const int jwest = mod (j-1, ncols);
+                    const int jeast = mod (j+1, ncols);
+
+                    const char neighbor_count = 
+                        BOARD (inboard, inorth, jwest) + 
+                        BOARD (inboard, inorth, j) + 
+                        BOARD (inboard, inorth, jeast) + 
+                        BOARD (inboard, i, jwest) +
+                        BOARD (inboard, i, jeast) + 
+                        BOARD (inboard, isouth, jwest) +
+                        BOARD (inboard, isouth, j) + 
+                        BOARD (inboard, isouth, jeast);
+
+                    BOARD(outboard, i, j) = alivep (neighbor_count, BOARD (inboard, i, j));
+
+                }
+            }
+        }
+        SWAP_BOARDS( outboard, inboard );
+
+    }
+    /* 
+     * We return the output board, so that we know which one contains
+     * the final result (because we've been swapping boards around).
+     * Just be careful when you free() the two boards, so that you don't
+     * free the same one twice!!! 
+     */
+    return inboard;
+}
+
 /*****************************************************************************
  * Game of life implementation
  ****************************************************************************/
@@ -154,5 +195,5 @@ game_of_life (char* outboard,
 	      const int ncols,
 	      const int gens_max)
 {
-  return threaded_game_of_life_driver (outboard, inboard, nrows, ncols, gens_max);
+  return openmp_game_of_life (outboard, inboard, nrows, ncols, gens_max);
 }
