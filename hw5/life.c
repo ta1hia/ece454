@@ -65,7 +65,6 @@ threaded_game_of_life (void* vargp)
     int rows = nrows/NUM_THREADS;
     char* inboard = targs->inboard;
     char*outboard = targs->outboard;
-    const int LDA = nrows;
 
     int start = rows * targs->quadrant;
     int gens_max = targs->gens_max;
@@ -94,7 +93,7 @@ threaded_game_of_life (void* vargp)
                     BOARD (inboard, isouth, jeast);
 
                 BOARD(outboard, i, j) = alivep (neighbor_count, BOARD (inboard, i, j));
-
+                //process_cell(outboard, inboard, nrows, ncols, i, j);
             }
         }
         barrier();
@@ -112,6 +111,61 @@ threaded_game_of_life (void* vargp)
 
 }
 
+void 
+process_cell(char* outboard,
+	      char* inboard,
+	      const int nrows,
+	      const int ncols,
+          int i,
+          int j)
+{
+    const int LDA = nrows;
+    char cell = BOARD(inboard,i,j);
+
+    //if cell is dead
+    //should this cell be alive
+    if (!IS_ALIVE(cell) && TO_SPAWN(cell)) {
+        //set alive
+        SET_ALIVE(cell);
+
+        //increment all neighbours
+        const int inorth = mod (i-1, nrows);
+        const int isouth = mod (i+1, nrows);
+        const int jwest = mod (j-1, ncols);
+        const int jeast = mod (j+1, ncols);
+        INCREMENT (outboard, inorth, jwest);
+        INCREMENT (outboard, inorth, j);
+        INCREMENT (outboard, inorth, jeast);
+        INCREMENT (outboard, i, jwest);
+        INCREMENT (outboard, i, jeast);
+        INCREMENT (outboard, isouth, jwest);
+        INCREMENT (outboard, isouth, j);
+        INCREMENT (outboard, isouth, jeast);
+    }
+
+
+    //if cell is alive
+    //if the cell should die
+    else if (cell <= (char) 0x11 || cell > (char) 0x13) { 
+        //set cell to be dead
+        SET_DEAD(cell);
+
+        //decrement all neighbours
+        const int inorth = mod (i-1, nrows);
+        const int isouth = mod (i+1, nrows);
+        const int jwest = mod (j-1, ncols);
+        const int jeast = mod (j+1, ncols);
+        DECREMENT (outboard, inorth, jwest);
+        DECREMENT (outboard, inorth, j);
+        DECREMENT (outboard, inorth, jeast);
+        DECREMENT (outboard, i, jwest);
+        DECREMENT (outboard, i, jeast);
+        DECREMENT (outboard, isouth, jwest);
+        DECREMENT (outboard, isouth, j);
+        DECREMENT (outboard, isouth, jeast);
+    }
+}
+
 char*
 threaded_game_of_life_driver (char* outboard, 
 	      char* inboard,
@@ -124,7 +178,6 @@ threaded_game_of_life_driver (char* outboard,
     pthread_t* thrd = malloc(sizeof(pthread_t)*NUM_THREADS);
 
     pthread_mutex_init(&mutex, NULL);
-
 
     for (i = 0; i < NUM_THREADS; i++) {
         args[i].inboard = inboard;
@@ -154,5 +207,8 @@ game_of_life (char* outboard,
 	      const int ncols,
 	      const int gens_max)
 {
-  return threaded_game_of_life_driver (outboard, inboard, nrows, ncols, gens_max);
+    if (nrows < 32)
+        return sequential_game_of_life(outboard, inboard, nrows, ncols, gens_max);
+    else
+        return threaded_game_of_life_driver (outboard, inboard, nrows, ncols, gens_max);
 }
