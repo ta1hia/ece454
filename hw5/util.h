@@ -28,21 +28,19 @@ alivep (char count, char state)
 /**
  * Bits represent state of a cell. Examples:
  * 00000    dead and no neighbours
- * 00001    alive and no neighbours
- * 00011    alive and one neighbour
- * 00110    dead and 3 neighbours
+ * 10000    alive and no neighbours
+ * 10001    alive and one neighbour
+ * 00011    dead and 3 neighbours
  */
 
-#define BOARD( __board, __i, __j )  (__board[(__i) + LDA*(__j)])
-#define SET_ALIVE(c) (c |=  (1 << (4)))
-#define SET_DEAD(c) (c &= ~(1 << (4)))
-#define IS_ALIVE(c) ((c >> 4) & 1)
-//#define TO_DIE (c) (c <= (char) 0x11 || c > (char) 0x13)
-#define TO_SPAWN(c) (c == (char)0x3)
+#define SPAWN(c) (c |=  (1 << (5)))
+#define PERISH(c) (c &= ~(1 << (5)))
+#define ALIVE(c) ((c >> 5) & 1)
+#define OVERPOPULATION(c) (c >= (char) 0x24) 
+#define STARVATION(c) (c <= (char) 0x21)
+#define SPAWNING(c) (c == (char)0x3)
 
-#define INCREMENT(__board, __i, __j) (BOARD(__board, __i, __j) += 1)
-#define DECREMENT(__board, __i, __j) (BOARD(__board, __i, __j) -= 1)
-
-
+#define INCREMENT(__board, __i, __j )  (__board[(__i) + nrows*(__j)] ++ )
+#define DECREMENT(__board, __i, __j )  (__board[(__i) + nrows*(__j)] -- )
 
 #endif /* _util_h */

@@ -1,7 +1,7 @@
 #include "load.h"
-//#include "util.h"
 #include <assert.h>
 #include <stdlib.h>
+#include "util.h"
 
 char*
 make_board (const int nrows, const int ncols)
@@ -23,7 +23,6 @@ static void
 load_dimensions (FILE* input, int* nrows, int* ncols)
 {
   int ngotten = 0;
-  
   ngotten = fscanf (input, "P1\n%d %d\n", nrows, ncols);
   if (ngotten < 1)
     {
@@ -43,34 +42,12 @@ load_dimensions (FILE* input, int* nrows, int* ncols)
       fclose (input);
       exit (EXIT_FAILURE);
     }
+  if(*ncols * *nrows > 100000000) {
+      fprintf (stderr, "*** World too big! ***\n");
+      fclose (input);
+      exit (EXIT_FAILURE);
+  }
 }
-
-/*
-void 
-initialize_neighbours(char* board, const int nrows, const int ncols) 
-{
-    int i, j;
-    const int LDA = nrows;
-
-    for (i = 0; i < nrows; i++) {
-        for (j = 0; j < ncols; j++) {
-            if (IS_ALIVE(board[i])) {
-                const int inorth = mod (i-1, nrows);
-                const int isouth = mod (i+1, nrows);
-                const int jwest = mod (j-1, ncols);
-                const int jeast = mod (j+1, ncols);
-                INCREMENT (board, inorth, jwest);
-                INCREMENT (board, inorth, j);
-                INCREMENT (board, inorth, jeast);
-                INCREMENT (board, i, jwest);
-                INCREMENT (board, i, jeast);
-                INCREMENT (board, isouth, jwest);
-                INCREMENT (board, isouth, j);
-                INCREMENT (board, isouth, jeast);
-            }
-        }
-    }
-}*/
 
 static char*
 load_board_values (FILE* input, const int nrows, const int ncols)
@@ -84,23 +61,24 @@ load_board_values (FILE* input, const int nrows, const int ncols)
 
   /* Fill in the board with values from the input file */
   for (i = 0; i < nrows * ncols; i++)
-    {
-      ngotten = fscanf (input, "%c\n", &board[i]);
-      if (ngotten < 1)
-	{
-	  fprintf (stderr, "*** Ran out of input at item %d ***\n", i);
-	  fclose (input);
-	  exit (EXIT_FAILURE);
-	}
-      else
-	/* ASCII '0' is not zero; do the conversion */
-	board[i] = board[i] - '0';
-      //TODO
-      //    if (board[i] == 1) board[i] = board[i] << 4;
-
+  {
+    ngotten = fscanf (input, "%c\n", &board[i]);
+    if (ngotten < 1)
+	  {
+	    fprintf (stderr, "*** Ran out of input at item %d ***\n", i);
+	    fclose (input);
+	    exit (EXIT_FAILURE);
+	  }
+    else {
+	    /* ASCII '0' is not zero; do the conversion */
+	    board[i] = board[i] - '0';
+      if (board[i] == 0x01)
+      {
+        board[i] = 32;
+      }
     }
+  }
 
-  // initialize_neighbours(board, nrows, ncols);
   return board;
 }
 
@@ -110,9 +88,4 @@ load_board (FILE* input, int* nrows, int* ncols)
   load_dimensions (input, nrows, ncols);
   return load_board_values (input, *nrows, *ncols);
 }
-
-                    
-
-
-
 

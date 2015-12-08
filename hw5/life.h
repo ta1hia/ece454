@@ -1,6 +1,19 @@
 #ifndef _life_h
 #define _life_h
 
+char*
+threaded_game_of_life_driver (char* outboard, 
+        char* inboard,
+        const int nrows,
+        const int ncols,
+        const int gens_max);
+
+void*
+threaded_game_of_life (void* vargp);
+
+void* 
+rowwerker (void* werkerp);
+
 /**
  * Given the initial board state in inboard and the board dimensions
  * nrows by ncols, evolve the board state gens_max times by alternating
@@ -25,13 +38,5 @@ sequential_game_of_life (char* outboard,
 			 const int nrows,
 			 const int ncols,
 			 const int gens_max);
-
-void 
-process_cell(char* outboard,
-	      char* inboard,
-	      const int nrows,
-	      const int ncols,
-          int i,
-          int j);
 
 #endif /* _life_h */

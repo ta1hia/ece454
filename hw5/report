@@ -1,0 +1,55 @@
+Miro Kuratczyk
+997575137
+miro.kuratczyk@mail.utoronto.ca
+
+Tahia Khan
+998897216
+tahia.khan@mail.utoronto.ca
+
+In our optimized version of the GOL keep a cell's state and neighbour count in each cell:
+
+Bits represent state of a cell. Examples:
+000000    dead and no neighbours
+100000    alive and no neighbours
+100001    alive and one neighbour
+000011    dead and 3 neighbours
+ 
+To do this we:
+- first process the inboard to follow this paradigm
+- if a cell is alive increment the count of its neighbours
+- keep computing each geneartion until gens_max is reached
+- restore the board to the original format of 1s & 0s
+- return this
+ 
+Now when we iterate through the board we can:
+- check if cell is to spawn or die
+- if spawning increment neighbours
+- if dying decrement neighbours
+- if neither we do nothing and save ourselves performing needless 
+  read/write cycles
+ 
+This is an optimization because when processing the board you can check the
+cell's neighbour count to determine if it should be dead or alive instead
+of looking at each neighbours value (1 or 0) individually. This reduces the
+number of reads/writes required significantly.
+ 
+We also parallelized our implementation with NUM_THREADS (= 4) threads. To
+do this we seperate the board into numrows/NUM_THREADS chunks and then
+process these chunks individually in NUM_THREADS (= 4) threads. This is done 
+the threaded_game_of_life function.
+ 
+To do this we first need to process the row boundaries seperately. This was
+parallelized and computed with the rowwerkers function. Then we can process
+the individual chunks and continue onto the next generation.
+ 
+Beyond these aforementioned optimizations we also used:
+- function inlining
+- LICM
+- optimizing for cache/memory access performance
+  
+Performance bottle necks were analyzed with: 
+> perf record -e cpu-cycles,cache-misses ./gol 1000 inputs/1k.pbm outputs/1k.pbm
+ 
+Although we achieved a ~20 times performance increase, the hashlife implementation
+is still far superior to ours.
+
